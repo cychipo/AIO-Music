@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-background: #faf2e8;
+    --color-surface: #fde3c8;
+    --color-primary: #ffa883;
+    --color-accent: #6fc7e2;
+    --color-text: #3d2b1f;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-primary);
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  .card-pastel {
+    @apply bg-surface rounded-2xl shadow-card border border-border;
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-surface text-text-primary font-medium px-4 py-2 rounded-xl transition-all duration-200;
+  }
+}
