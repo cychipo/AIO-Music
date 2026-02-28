@@ -107,7 +107,14 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         refreshToken: state.refreshToken,
         user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
+      // Sau khi hydrate từ localStorage: nếu có token thì coi là đã đăng nhập
+      onRehydrateStorage: () => (state) => {
+        if (state && state.token) {
+          state.isAuthenticated = true;
+        }
+      },
     },
   ),
 );
