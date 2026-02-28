@@ -13,6 +13,7 @@ AIO-MUSIC/
 ## Quick Start
 
 ### Backend
+
 ```bash
 cd backend
 cp .env.example .env   # Điền API keys
@@ -21,6 +22,7 @@ yarn start:dev
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 yarn install
@@ -28,7 +30,7 @@ yarn dev
 ```
 
 ## Yêu cầu hệ thống
+
 - Node.js >= 18
 - MongoDB (local hoặc Atlas)
 - Redis (optional, cho caching)
-- yt-dlp (cài qua `brew install yt-dlp` hoặc `pip install yt-dlp`)

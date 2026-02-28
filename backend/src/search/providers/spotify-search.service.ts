@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
-import { SearchResult } from '../search.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { HttpService } from "@nestjs/axios";
+import { ConfigService } from "@nestjs/config";
+import { firstValueFrom } from "rxjs";
+import { SearchResult } from "../search.service";
 
 interface SpotifyToken {
   access_token: string;
@@ -27,18 +27,22 @@ export class SpotifySearchService {
       return this.token.access_token;
     }
 
-    const clientId = this.configService.get<string>('SPOTIFY_CLIENT_ID');
-    const clientSecret = this.configService.get<string>('SPOTIFY_CLIENT_SECRET');
-    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const clientId = this.configService.get<string>("SPOTIFY_CLIENT_ID");
+    const clientSecret = this.configService.get<string>(
+      "SPOTIFY_CLIENT_SECRET",
+    );
+    const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+      "base64",
+    );
 
     const response = await firstValueFrom(
       this.http.post(
-        'https://accounts.spotify.com/api/token',
-        'grant_type=client_credentials',
+        "https://accounts.spotify.com/api/token",
+        "grant_type=client_credentials",
         {
           headers: {
             Authorization: `Basic ${credentials}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
+            "Content-Type": "application/x-www-form-urlencoded",
           },
         },
       ),
@@ -56,8 +60,8 @@ export class SpotifySearchService {
     const token = await this.getToken();
 
     const response = await firstValueFrom(
-      this.http.get('https://api.spotify.com/v1/search', {
-        params: { q: query, type: 'track', limit },
+      this.http.get("https://api.spotify.com/v1/search", {
+        params: { q: query, type: "track", limit },
         headers: { Authorization: `Bearer ${token}` },
       }),
     );
@@ -65,17 +69,17 @@ export class SpotifySearchService {
     return response.data.tracks.items.map((track: any) => ({
       id: track.id,
       title: track.name,
-      artist: track.artists.map((a: any) => a.name).join(', '),
-      thumbnail: track.album.images?.[1]?.url || '',
+      artist: track.artists.map((a: any) => a.name).join(", "),
+      thumbnail: track.album.images?.[1]?.url || "",
       duration: Math.round(track.duration_ms / 1000),
-      source: 'spotify' as const,
+      source: "spotify" as const,
     }));
   }
 
   /**
    * Gets metadata for a single Spotify track (used for YouTube mapping).
    */
-  async getTrackMetadata(trackId: string): Promise<Partial<SearchResult> | null> {
+  async getTrackMetadata(trackId: string): Promise<SearchResult | null> {
     try {
       const token = await this.getToken();
       const response = await firstValueFrom(
@@ -87,10 +91,10 @@ export class SpotifySearchService {
       return {
         id: track.id,
         title: track.name,
-        artist: track.artists.map((a: any) => a.name).join(', '),
-        thumbnail: track.album.images?.[1]?.url || '',
+        artist: track.artists.map((a: any) => a.name).join(", "),
+        thumbnail: track.album.images?.[1]?.url || "",
         duration: Math.round(track.duration_ms / 1000),
-        source: 'spotify',
+        source: "spotify",
       };
     } catch {
       return null;
