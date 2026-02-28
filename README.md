@@ -1,11 +1,11 @@
-# AIO-MUSIC
+# VibeX
 
-Ứng dụng nghe nhạc đa nguồn — YouTube, Spotify, SoundCloud — với giao diện Pastel hiện đại.
+Ứng dụng nghe nhạc đa nguồn — YouTube, Spotify, SoundCloud — với giao diện hiện đại.
 
 ## Cấu trúc dự án
 
 ```
-AIO-MUSIC/
+VibeX/
 ├── backend/          # NestJS API
 └── frontend/         # React.js SPA
 ```
