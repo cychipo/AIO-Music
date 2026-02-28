@@ -10,7 +10,7 @@ const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor: attach JWT token
+// Request interceptor: đính kèm JWT access token vào mọi request
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('aio_token');
@@ -22,17 +22,83 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Response interceptor: handle 401 globally
+// Cờ để tránh gọi refresh nhiều lần đồng thời
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string) => void> = [];
+
+function onRefreshed(newToken: string) {
+  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers = [];
+}
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+// Response interceptor: tự động refresh token khi nhận 401
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('aio_token');
-      // Redirect to login if not already there
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+  async (error) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // Chỉ thử refresh 1 lần, và không áp dụng cho chính endpoint /auth/refresh
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/auth/refresh')
+    ) {
+      const storedRefreshToken = localStorage.getItem('aio_refresh_token');
+
+      if (!storedRefreshToken) {
+        // Không có refresh token → redirect về login
+        localStorage.removeItem('aio_token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        // Đang refresh → chờ token mới rồi retry
+        return new Promise((resolve) => {
+          subscribeTokenRefresh((newToken: string) => {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await axios.post(`${BASE_URL}/auth/refresh`, {
+          refreshToken: storedRefreshToken,
+        });
+        const { accessToken, refreshToken: newRefreshToken } = res.data;
+
+        localStorage.setItem('aio_token', accessToken);
+        localStorage.setItem('aio_refresh_token', newRefreshToken);
+
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        onRefreshed(accessToken);
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
+      } catch {
+        // Refresh thất bại → xoá token và về trang login
+        localStorage.removeItem('aio_token');
+        localStorage.removeItem('aio_refresh_token');
+        refreshSubscribers = [];
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      } finally {
+        isRefreshing = false;
       }
     }
+
     return Promise.reject(error);
   },
 );
@@ -45,6 +111,13 @@ export const authApi = {
     apiClient.post('/auth/login', { email, password }),
   register: (email: string, password: string, displayName: string) =>
     apiClient.post('/auth/register', { email, password, displayName }),
+  refresh: (refreshToken: string) =>
+    apiClient.post('/auth/refresh', { refreshToken }),
+  logout: (refreshToken: string) =>
+    apiClient.post('/auth/logout', { refreshToken }),
+  /** Đăng nhập bằng Google One Tap — gửi id_token (credential) lên backend để verify */
+  googleOneTap: (credential: string) =>
+    apiClient.post('/auth/google/one-tap', { credential }),
 };
 
 export const searchApi = {
