@@ -8,3 +8,6 @@ dist/
 .spec
 .shared
 .mockups
+# YouTube cookies — contains session tokens, never commit
+cookies.txt
+**/cookies.txt

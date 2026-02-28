@@ -1,101 +1,227 @@
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
+import { usePlayerStore } from "../store/playerStore";
+import {
+  useTrending,
+  trendingTrackToPlayable,
+  formatDuration,
+} from "../hooks/useTrending";
+import { TrendingTrack } from "../types";
 
-/* ── Data ── */
-const RECOMMENDED = [
-  {
-    id: 0,
-    title: "Neon Horizon",
-    artist: "Vaporwave Collective",
-    color: "from-violet-500 to-purple-400",
-  },
-  {
-    id: 1,
-    title: "Deep Echoes",
-    artist: "Soma & Soul",
-    color: "from-sky-500 to-cyan-400",
-  },
-  {
-    id: 2,
-    title: "Woodland Folk",
-    artist: "The Wanderer",
-    color: "from-emerald-500 to-teal-400",
-  },
-  {
-    id: 3,
-    title: "Bass Culture",
-    artist: "Electric City",
-    color: "from-orange-500 to-amber-400",
-  },
-  {
-    id: 4,
-    title: "Retro Grooves",
-    artist: "Classic Gold",
-    color: "from-yellow-500 to-orange-400",
-  },
-  {
-    id: 5,
-    title: "Late Night Jazz",
-    artist: "Blue Note Trio",
-    color: "from-blue-600 to-indigo-500",
-  },
-];
+// ─── Platform badge config ───────────────────────────────────────────────────
 
-const POPULAR = [
-  {
-    rank: 1,
-    title: "After Hours",
-    artist: "The Weekenders",
-    album: "Solaris Rising",
-    duration: "3:45",
-    liked: false,
+const PLATFORM_BADGE: Record<
+  TrendingTrack["source"],
+  { label: string; cls: string; icon: JSX.Element }
+> = {
+  youtube: {
+    label: "YouTube",
+    cls: "bg-red-600/25 text-red-400 border border-red-500/30",
+    icon: (
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z" />
+      </svg>
+    ),
   },
-  {
-    rank: 2,
-    title: "Electric Sky",
-    artist: "Midnight Pulse",
-    album: "Digital Echoes",
-    duration: "4:12",
-    liked: true,
+  spotify: {
+    label: "Spotify",
+    cls: "bg-green-600/25 text-green-400 border border-green-500/30",
+    icon: (
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.7 0 12 0zm5.5 17.3c-.2.4-.7.5-1 .3-2.8-1.7-6.4-2.1-10.6-1.1-.4.1-.8-.2-.9-.5-.1-.4.2-.8.5-.9 4.6-1 8.5-.6 11.6 1.3.4.2.5.7.4 1zm1.5-3.3c-.3.4-.8.6-1.3.3-3.2-2-8.1-2.6-11.9-1.4-.5.1-1-.1-1.1-.6-.1-.5.1-1 .6-1.1 4.3-1.3 9.7-.7 13.3 1.6.4.3.6.8.4 1.2zm.1-3.4c-3.9-2.3-10.2-2.5-13.9-1.4-.6.2-1.2-.2-1.4-.7-.2-.6.2-1.2.7-1.4C7.9 5.7 14.8 6 19.2 8.6c.5.3.7 1 .4 1.5-.3.5-1 .7-1.5.5z" />
+      </svg>
+    ),
   },
-  {
-    rank: 3,
-    title: "Golden Hour",
-    artist: "Sun Collective",
-    album: "Warmth",
-    duration: "3:29",
-    liked: false,
+  soundcloud: {
+    label: "SoundCloud",
+    cls: "bg-orange-500/25 text-orange-400 border border-orange-500/30",
+    icon: (
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M0 15.5a.5.5 0 0 0 1 0v-5a.5.5 0 0 0-1 0v5zm1.5 1a.5.5 0 0 0 1 0v-7a.5.5 0 0 0-1 0v7zm1.5.5a.5.5 0 0 0 1 0V12a.5.5 0 0 0-1 0v5zm1.5.5a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0v6zm5.5-10C9.5 5 8 6.5 8 8.2c0 .1 0 .2.01.3A3 3 0 0 0 6 11.5a3 3 0 0 0 3 3h7a2.5 2.5 0 0 0 2.5-2.5c0-1.2-.8-2.2-2-2.5V9a4.5 4.5 0 0 0-7.5-1z" />
+      </svg>
+    ),
   },
-  {
-    rank: 4,
-    title: "Midnight Run",
-    artist: "Neon Drive",
-    album: "City Lights",
-    duration: "5:01",
-    liked: false,
-  },
-  {
-    rank: 5,
-    title: "Lunar Waves",
-    artist: "Drift & Echo",
-    album: "Cosmos",
-    duration: "3:58",
-    liked: true,
-  },
-];
+};
+
+// ─── Card skeleton ────────────────────────────────────────────────────────────
+
+function CardSkeleton() {
+  return (
+    <div className="p-4 sm:p-5 rounded-2xl bg-surface-dark border border-white/5 animate-pulse">
+      <div className="aspect-square mb-4 rounded-xl bg-white/10" />
+      <div className="h-3.5 bg-white/10 rounded w-4/5 mb-2" />
+      <div className="h-3 bg-white/8 rounded w-3/5 mb-3" />
+      <div className="h-5 bg-white/6 rounded-full w-20" />
+    </div>
+  );
+}
+
+// ─── Track card ───────────────────────────────────────────────────────────────
+
+interface TrackCardProps {
+  track: TrendingTrack;
+  queue: TrendingTrack[];
+  isCurrentTrack: boolean;
+  isPlaying: boolean;
+}
+
+function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) {
+  const play = usePlayerStore((s) => s.play);
+  const togglePlay = usePlayerStore((s) => s.togglePlay);
+  const badge = PLATFORM_BADGE[track.source];
+
+  const handlePlay = () => {
+    if (isCurrentTrack) { togglePlay(); return; }
+    const playable = trendingTrackToPlayable(track);
+    const playableQueue = queue.map(trendingTrackToPlayable);
+    play(playable, playableQueue);
+  };
+
+  return (
+    <article
+      onClick={handlePlay}
+      className={`
+        group relative p-4 sm:p-5 rounded-2xl border cursor-pointer
+        transition-all duration-200
+        ${isCurrentTrack
+          ? "bg-primary/10 border-primary/30"
+          : "bg-surface-dark hover:bg-surface-dark-light border-white/5 hover:border-white/10"
+        }
+      `}
+    >
+      {/* Rank badge — top-left */}
+      <span className="absolute top-3 left-3 z-10 text-xs font-bold tabular-nums text-slate-500 bg-black/40 rounded px-1.5 py-0.5">
+        #{track.rank}
+      </span>
+
+      {/* Thumbnail / artwork */}
+      <div className="relative aspect-square mb-4 rounded-xl overflow-hidden shadow-2xl">
+        {track.thumbnail ? (
+          <img
+            src={track.thumbnail}
+            alt={track.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+            <svg className="w-10 h-10 text-slate-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
+            </svg>
+          </div>
+        )}
+
+        {/* Play button overlay */}
+        <button
+          aria-label={isCurrentTrack && isPlaying ? `Pause ${track.title}` : `Play ${track.title}`}
+          className="
+            absolute bottom-2 right-2 size-11 rounded-full
+            bg-gradient-to-br from-primary to-accent-amber text-white shadow-xl
+            opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0
+            transition-all duration-200 flex items-center justify-center
+            hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
+          "
+        >
+          {isCurrentTrack && isPlaying ? (
+            // Pause icon
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </button>
+
+        {/* Playing indicator overlay */}
+        {isCurrentTrack && isPlaying && (
+          <div className="absolute inset-0 bg-primary/10 flex items-end justify-start p-2 pointer-events-none">
+            <span className="flex items-end gap-px h-5">
+              {[60, 100, 40, 80, 60].map((h, i) => (
+                <span
+                  key={i}
+                  className="w-1 bg-primary rounded-full animate-[bounce_0.6s_ease-in-out_infinite]"
+                  style={{ height: `${h}%`, animationDelay: `${i * 80}ms` }}
+                />
+              ))}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Title */}
+      <h3 className={`
+        font-bold text-sm leading-tight mb-1 truncate transition-colors
+        ${isCurrentTrack ? "text-primary" : "text-white group-hover:text-primary"}
+      `}>
+        {track.title}
+      </h3>
+
+      {/* Artist */}
+      <p className="text-xs text-slate-400 truncate mb-3">{track.artist}</p>
+
+      {/* Footer: platform badge + duration */}
+      <div className="flex items-center justify-between">
+        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>
+          {badge.icon}
+          {badge.label}
+        </span>
+        {track.duration > 0 && (
+          <span className="text-xs text-slate-600 tabular-nums">
+            {formatDuration(track.duration)}
+          </span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+// ─── HomePage ─────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const user = useAuthStore((s) => s.user);
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const status = usePlayerStore((s) => s.status);
+
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  const { data, isLoading, refetch } = useTrending(10);
+
+  // Gộp cả 3 nguồn thành 1 mảng phẳng, xen kẽ (1 YT, 1 SP, 1 SC...)
+  // để homepage trông đa dạng chứ không bị lặp nguồn
+  const allTracks: TrendingTrack[] = (() => {
+    if (!data) return [];
+    const yt = data.youtube;
+    const sp = data.spotify;
+    const sc = data.soundcloud;
+    const merged: TrendingTrack[] = [];
+    const len = Math.max(yt.length, sp.length, sc.length);
+    for (let i = 0; i < len; i++) {
+      if (yt[i]) merged.push(yt[i]);
+      if (sp[i]) merged.push(sp[i]);
+      if (sc[i]) merged.push(sc[i]);
+    }
+    return merged;
+  })();
+
+  const isCurrentTrackFn = (track: TrendingTrack) => {
+    if (!currentTrack) return false;
+    const ctId = "id" in currentTrack ? currentTrack.id : (currentTrack as any)._id;
+    const ctYtId = (currentTrack as any).youtubeId;
+    return (
+      ctId === (track.youtubeId || track.id) ||
+      (ctYtId && ctYtId === track.youtubeId)
+    );
+  };
 
   return (
     <div className="font-sans">
       {/* ── Hero Banner ── */}
       <section className="mb-8 sm:mb-12">
         <div className="relative h-[220px] sm:h-[280px] lg:h-[340px] w-full rounded-2xl sm:rounded-[2.5rem] overflow-hidden group border border-white/5">
-          {/* Concert atmosphere background — dark left, purple/magenta right */}
           <div
             className="absolute inset-0"
             style={{
@@ -103,7 +229,6 @@ export default function HomePage() {
                 "linear-gradient(to right, #121212 0%, rgba(18,18,18,0.85) 35%, rgba(100,30,80,0.55) 65%, rgba(140,40,110,0.75) 100%)",
             }}
           />
-          {/* Warm orange glow near text */}
           <div
             className="absolute inset-0"
             style={{
@@ -111,7 +236,6 @@ export default function HomePage() {
                 "radial-gradient(ellipse at 75% 50%, rgba(180,60,140,0.45) 0%, transparent 60%), radial-gradient(ellipse at 90% 80%, rgba(255,111,0,0.12) 0%, transparent 40%)",
             }}
           />
-          {/* Subtle neon lines on right side */}
           <div
             className="absolute right-0 top-0 bottom-0 w-1/2 overflow-hidden opacity-40"
             aria-hidden="true"
@@ -120,7 +244,6 @@ export default function HomePage() {
             <div className="absolute top-1/4 right-1/3 w-px h-48 rotate-[-15deg] bg-gradient-to-b from-transparent via-pink-300 to-transparent blur-[1px]" />
             <div className="absolute top-1/2 right-1/6 w-px h-24 rotate-[35deg] bg-gradient-to-b from-transparent via-purple-300 to-transparent blur-[2px]" />
           </div>
-          {/* Scale on hover */}
           <div
             className="absolute inset-0 transition-transform duration-1000 group-hover:scale-105 rounded-[2.5rem]"
             style={{
@@ -129,21 +252,15 @@ export default function HomePage() {
             }}
           />
 
-          {/* Content */}
           <div
             className="absolute inset-0 flex flex-col justify-center p-6 sm:p-10 lg:p-16"
             style={{ paddingTop: "16px" }}
           >
             <span className="flex items-center gap-2 text-accent-gold font-bold text-xs uppercase tracking-[0.3em] mb-4">
-              <svg
-                className="w-4 h-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {user ? `${greeting}, ${user.displayName}` : "Trending Artist"}
+              {user ? `${greeting}, ${user.displayName}` : "Trending Now"}
             </span>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white mb-3 sm:mb-5 lg:mb-6 drop-shadow-2xl tracking-tighter leading-none">
@@ -153,25 +270,22 @@ export default function HomePage() {
             </h1>
 
             <p className="hidden sm:block text-slate-300 max-w-md mb-6 lg:mb-10 text-sm lg:text-lg font-light leading-relaxed">
-              Stream from YouTube, Spotify, TikTok & SoundCloud — all without
-              switching apps.
+              Stream from YouTube, Spotify & SoundCloud — all without switching apps.
             </p>
 
             <div className="flex gap-3">
               <Link to="/search">
                 <button className="px-5 sm:px-8 lg:px-10 py-3 sm:py-4 bg-gradient-to-r from-primary to-accent-amber text-white font-bold rounded-full flex items-center gap-2 hover:scale-105 transition-all shadow-2xl shadow-primary/40 text-sm sm:text-base">
-                  <svg
-                    className="w-4 h-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                   Listen Now
                 </button>
               </Link>
-              <button className="px-5 sm:px-8 lg:px-10 py-3 sm:py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 font-bold rounded-full hover:bg-white/20 transition-all text-sm sm:text-base">
+              <button
+                onClick={refetch}
+                className="px-5 sm:px-8 lg:px-10 py-3 sm:py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 font-bold rounded-full hover:bg-white/20 transition-all text-sm sm:text-base"
+              >
                 Top Charts
               </button>
             </div>
@@ -179,178 +293,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Recommended for You ── */}
-      <section className="mb-8 sm:mb-12">
-        <div className="flex items-center justify-between mb-4 sm:mb-8">
+      {/* ── Trending Charts ── */}
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white">
-            Recommended for You
+            Trending Now
           </h2>
           <Link
             to="/search"
             className="text-sm font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1"
           >
             See all
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-8">
-          {RECOMMENDED.map((item) => (
-            <article
-              key={item.id}
-              className="group p-4 sm:p-5 rounded-2xl bg-surface-dark hover:bg-surface-dark-light transition-all border border-white/5 cursor-pointer"
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6">
+            {Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)}
+          </div>
+        ) : allTracks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
+            <svg className="w-12 h-12 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            </svg>
+            <p className="text-base font-medium">No trending data available</p>
+            <button
+              onClick={refetch}
+              className="mt-1 text-sm text-primary hover:underline"
             >
-              {/* Artwork */}
-              <div
-                className={`relative aspect-square mb-5 rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br ${item.color}`}
-              >
-                {/* Play button — appears on hover */}
-                <button
-                  aria-label={`Play ${item.title}`}
-                  className="absolute bottom-3 right-3 size-14 rounded-full bg-gradient-to-br from-primary to-accent-amber text-white shadow-2xl
-                             opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0
-                             transition-all flex items-center justify-center hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <svg
-                    className="w-7 h-7"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </button>
-              </div>
-              <h3 className="font-bold text-white mb-1 truncate group-hover:text-primary transition-colors">
-                {item.title}
-              </h3>
-              <p className="text-sm text-slate-400 truncate">{item.artist}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Popular Tracks ── */}
-      <section className="mb-12">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold tracking-tight text-white">
-            Popular Tracks
-          </h2>
-        </div>
-
-        {/* Header row */}
-        <div className="flex items-center gap-4 px-3 pb-3 border-b border-white/8 text-xs text-slate-500 uppercase tracking-wider font-bold">
-          <span className="w-8 text-center">#</span>
-          <span className="w-14 flex-shrink-0" />
-          <span className="flex-1">Title</span>
-          <span className="hidden md:block text-sm w-36">Album</span>
-          <span className="flex items-center gap-6 pr-1">
-            <span className="w-5" />
-            <span className="w-12 text-right">Duration</span>
-            <span className="w-5" />
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-1 mt-1">
-          {POPULAR.map((track, i) => (
-            <div
-              key={track.rank}
-              className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 group transition-all border border-transparent hover:border-white/5 cursor-pointer"
-            >
-              {/* Rank / play */}
-              <span className="w-8 text-center text-slate-500 group-hover:hidden tabular-nums">
-                {track.rank}
-              </span>
-              <button
-                aria-label={`Play ${track.title}`}
-                className="w-8 text-center text-primary hidden group-hover:flex items-center justify-center focus-visible:ring-2 focus-visible:ring-primary rounded"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </button>
-
-              {/* Thumbnail */}
-              <div
-                aria-hidden="true"
-                className={`size-14 flex-shrink-0 rounded-lg border border-white/5 bg-gradient-to-br shadow-2xl ${RECOMMENDED[i % RECOMMENDED.length].color}`}
+              Try again
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6">
+            {allTracks.map((track) => (
+              <TrackCard
+                key={`${track.source}-${track.id}`}
+                track={track}
+                queue={allTracks}
+                isCurrentTrack={isCurrentTrackFn(track)}
+                isPlaying={status === "playing"}
               />
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-white group-hover:text-primary transition-colors truncate">
-                  {track.title}
-                </p>
-                <p className="text-sm text-slate-400 truncate">
-                  {track.artist}
-                </p>
-              </div>
-
-              {/* Album */}
-              <p className="hidden md:block text-sm text-slate-400 truncate w-36">
-                {track.album}
-              </p>
-
-              {/* Actions */}
-              <div className="flex items-center gap-6 flex-shrink-0">
-                <button
-                  aria-label={track.liked ? "Unlike" : "Like"}
-                  aria-pressed={track.liked}
-                  className={`transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full ${track.liked ? "text-primary" : "text-slate-500 hover:text-primary"}`}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill={track.liked ? "currentColor" : "none"}
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                </button>
-                <span className="text-sm text-slate-400 w-12 text-right tabular-nums">
-                  {track.duration}
-                </span>
-                <button
-                  aria-label="More options"
-                  className="text-slate-500 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="M12 5c-.828 0-1.5-.672-1.5-1.5S11.172 2 12 2s1.5.672 1.5 1.5S12.828 5 12 5zm0 7c-.828 0-1.5-.672-1.5-1.5S11.172 10.5 12 10.5s1.5.672 1.5 1.5S12.828 12 12 12zm0 7c-.828 0-1.5-.672-1.5-1.5S11.172 17 12 17s1.5.672 1.5 1.5S12.828 19 12 19z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

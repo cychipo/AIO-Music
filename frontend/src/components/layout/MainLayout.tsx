@@ -253,13 +253,13 @@ export default function MainLayout() {
         </header>
 
         {/* ── Scrollable page content ── */}
-        <div className="flex-1 overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-32">
+        <div className="flex-1 overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-0">
           <Outlet />
         </div>
-      </main>
 
-      {/* ── Fixed Player Bar ── */}
-      <PlayerBar />
+        {/* ── Player Bar ── */}
+        <PlayerBar />
+      </main>
     </div>
   );
 }

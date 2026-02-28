@@ -86,7 +86,7 @@ const antdThemeConfig: ThemeConfig = {
     },
     Layout: {
       colorBgHeader: '#faf2e8',
-      colorBgSider: '#fde3c8',
+      colorBgSolid: '#fde3c8',
       colorBgBody: '#faf2e8',
     },
   },

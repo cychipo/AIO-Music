@@ -1,36 +1,41 @@
-import { useState } from 'react';
-import { Form, Input, Button, Alert } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { Music } from 'lucide-react';
+import { useState } from "react";
+import { Form, Input, Button, Alert } from "antd";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import { Music } from "lucide-react";
 
 export default function LoginPage() {
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const onFinish = async (values: { email: string; password: string }) => {
-    setError('');
+    setError("");
     try {
       await login(values.email, values.password);
-      navigate('/');
+      navigate("/");
     } catch (e: any) {
-      setError(e.response?.data?.message || 'Login failed');
+      setError(e.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#faf2e8' }}>
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: "#faf2e8" }}
+    >
       <div className="card-pastel p-8 w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center gap-2 justify-center mb-8">
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
             <Music className="text-white" size={22} />
           </div>
-          <span className="font-bold text-2xl text-text-primary">AIO Music</span>
+          <span className="font-bold text-2xl text-text-primary">VibeX</span>
         </div>
 
-        <h2 className="text-xl font-semibold text-text-primary mb-6 text-center">Welcome back</h2>
+        <h2 className="text-xl font-semibold text-text-primary mb-6 text-center">
+          Welcome back
+        </h2>
 
         {error && <Alert message={error} type="error" className="mb-4" />}
 
@@ -38,7 +43,7 @@ export default function LoginPage() {
           <Form.Item
             name="email"
             label="Email"
-            rules={[{ required: true, type: 'email' }]}
+            rules={[{ required: true, type: "email" }]}
           >
             <Input size="large" placeholder="you@example.com" />
           </Form.Item>
@@ -62,7 +67,7 @@ export default function LoginPage() {
         </Form>
 
         <p className="text-center text-sm text-text-muted mt-4">
-          No account?{' '}
+          No account?{" "}
           <Link to="/register" className="text-accent font-medium">
             Sign up
           </Link>

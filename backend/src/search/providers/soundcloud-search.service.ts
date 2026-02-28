@@ -33,6 +33,7 @@ export class SoundcloudSearchService {
       thumbnail: track.artwork_url || '',
       duration: Math.round(track.duration / 1000),
       source: 'soundcloud' as const,
+      url: track.permalink_url || '',
     }));
   }
 }

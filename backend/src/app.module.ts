@@ -8,6 +8,7 @@ import { TracksModule } from './tracks/tracks.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { StreamModule } from './stream/stream.module';
 import { SearchModule } from './search/search.module';
+import { TrendingModule } from './trending/trending.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { SearchModule } from './search/search.module';
     PlaylistsModule,
     StreamModule,
     SearchModule,
+    TrendingModule,
   ],
 })
 export class AppModule {}

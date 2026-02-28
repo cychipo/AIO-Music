@@ -83,7 +83,7 @@ export default function Sidebar({
         </div>
         {!isCollapsed && (
           <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap overflow-hidden text-ellipsis">
-            AIO Music
+            VibeX
           </h1>
         )}
       </div>

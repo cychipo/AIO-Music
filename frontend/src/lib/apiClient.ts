@@ -58,9 +58,7 @@ export const searchApi = {
 
 export const streamApi = {
   getStreamUrl: (youtubeId: string) =>
-    `${BASE_URL}/stream/${youtubeId}`,
-  getMetadata: (youtubeId: string) =>
-    apiClient.get(`/stream/${youtubeId}/metadata`),
+    `${BASE_URL}/stream?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}`,
 };
 
 export const playlistApi = {
@@ -80,4 +78,16 @@ export const userApi = {
   getMe: () => apiClient.get('/users/me'),
   updateProfile: (data: object) => apiClient.patch('/users/me', data),
   toggleLike: (trackId: string) => apiClient.patch(`/users/me/like/${trackId}`),
+};
+
+export const trendingApi = {
+  /** Lấy trending song song từ cả 3 nền tảng */
+  getAll: (limit = 10) =>
+    apiClient.get('/trending', { params: { limit } }),
+  getYoutube: (limit = 10) =>
+    apiClient.get('/trending/youtube', { params: { limit } }),
+  getSpotify: (limit = 10) =>
+    apiClient.get('/trending/spotify', { params: { limit } }),
+  getSoundCloud: (limit = 10) =>
+    apiClient.get('/trending/soundcloud', { params: { limit } }),
 };
