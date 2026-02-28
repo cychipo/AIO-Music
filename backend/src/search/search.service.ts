@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { forkJoin, from, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { YoutubeSearchService } from './providers/youtube-search.service';
-import { SpotifySearchService } from './providers/spotify-search.service';
-import { SoundcloudSearchService } from './providers/soundcloud-search.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { forkJoin, from, of } from "rxjs";
+import { catchError, map } from "rxjs/operators";
+import { YoutubeSearchService } from "./providers/youtube-search.service";
+import { SpotifySearchService } from "./providers/spotify-search.service";
+import { SoundcloudSearchService } from "./providers/soundcloud-search.service";
 
 export interface SearchResult {
   id: string;
@@ -11,7 +11,7 @@ export interface SearchResult {
   artist: string;
   thumbnail: string;
   duration: number;
-  source: 'youtube' | 'spotify' | 'soundcloud';
+  source: "youtube" | "spotify" | "soundcloud";
   youtubeId?: string; // Resolved for Spotify tracks
 }
 
@@ -72,7 +72,9 @@ export class SearchService {
   /**
    * Spotify Workaround: Get Spotify metadata then find matching YouTube stream.
    */
-  async resolveSpotifyToYoutube(spotifyTrackId: string): Promise<SearchResult | null> {
+  async resolveSpotifyToYoutube(
+    spotifyTrackId: string,
+  ): Promise<SearchResult | null> {
     const meta = await this.spotifySearch.getTrackMetadata(spotifyTrackId);
     if (!meta) return null;
 
@@ -81,8 +83,12 @@ export class SearchService {
     if (!youtubeResults.length) return null;
 
     return {
-      ...meta,
-      source: 'spotify',
+      id: meta.id,
+      title: meta.title,
+      artist: meta.artist,
+      thumbnail: meta.thumbnail,
+      duration: meta.duration,
+      source: "spotify" as const,
       youtubeId: youtubeResults[0].id,
     };
   }

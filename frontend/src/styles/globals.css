@@ -1,55 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --color-background: #faf2e8;
-    --color-surface: #fde3c8;
-    --color-primary: #ffa883;
-    --color-accent: #6fc7e2;
-    --color-text: #3d2b1f;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
+  :root { color-scheme: dark; }
 
   html, body {
-    background-color: var(--color-background);
-    color: var(--color-text);
-    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    font-family: 'Inter', 'Montserrat', system-ui, sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--color-background);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-primary);
-    border-radius: 3px;
-  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #121212; }
+  ::-webkit-scrollbar-thumb { background: #FF6F00; border-radius: 3px; }
 }
 
-@layer components {
-  .card-pastel {
-    @apply bg-surface rounded-2xl shadow-card border border-border;
+@layer utilities {
+  /* Scrollbar */
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Glassmorphism — spec: rgba(30,30,30,0.7), blur 15px, border rgba(255,255,255,0.1) */
+  .glass-panel {
+    background: rgba(30, 30, 30, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .btn-primary {
-    @apply bg-primary hover:bg-primary-dark text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200;
+  /* Sunset Glow Gradient — spec: linear-gradient(135deg, #FF6F00, #FFA000) */
+  .gradient-primary {
+    background: linear-gradient(135deg, #FF6F00 0%, #FFA000 100%);
   }
 
-  .btn-ghost {
-    @apply bg-transparent hover:bg-surface text-text-primary font-medium px-4 py-2 rounded-xl transition-all duration-200;
+  /* Glow shadows */
+  .glow-orange { box-shadow: 0 0 20px rgba(255, 111, 0, 0.35); }
+  .glow-amber  { box-shadow: 0 0 25px rgba(255, 160, 0, 0.25); }
+
+  /* Focus ring — ui.md compliance */
+  .focus-ring {
+    outline: none;
+  }
+  .focus-ring:focus-visible {
+    box-shadow: 0 0 0 2px #FF6F00, 0 0 0 4px rgba(255,111,0,0.3);
   }
 }

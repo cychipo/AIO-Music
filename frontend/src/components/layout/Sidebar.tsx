@@ -1,65 +1,202 @@
-import { NavLink } from 'react-router-dom';
-import { Home, Search, Library, Music } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
-import { Button } from 'antd';
+import { NavLink, Link } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
 
 const navItems = [
-  { to: '/', icon: Home, label: 'Home' },
-  { to: '/search', icon: Search, label: 'Search' },
-  { to: '/library', icon: Library, label: 'Library' },
+  {
+    to: "/",
+    label: "Home",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+      </svg>
+    ),
+  },
+  {
+    to: "/search",
+    label: "Search",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
+      </svg>
+    ),
+  },
+  {
+    to: "/library",
+    label: "Your Library",
+    icon: (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+        />
+      </svg>
+    ),
+  },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  isCollapsed = false,
+}: {
+  isCollapsed?: boolean;
+}) {
   const { user, logout } = useAuthStore();
 
   return (
-    <div className="flex flex-col h-full p-4">
+    <>
       {/* Logo */}
-      <div className="flex items-center gap-2 mb-8 px-2">
-        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-          <Music className="text-white" size={20} />
+      <div
+        className={`flex items-center gap-3 ${isCollapsed ? "justify-center w-full px-0" : "px-2"}`}
+      >
+        <div className="bg-gradient-to-br from-primary to-accent-amber p-2 rounded-lg glow-orange">
+          <svg
+            className="w-6 h-6 text-white"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+          </svg>
         </div>
-        <span className="font-bold text-xl text-text-primary">AIO Music</span>
+        {!isCollapsed && (
+          <h1 className="text-xl font-bold tracking-tight text-white whitespace-nowrap overflow-hidden text-ellipsis">
+            AIO Music
+          </h1>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map(({ to, icon: Icon, label }) => (
+      <nav className="flex flex-col gap-2" aria-label="Primary navigation">
+        {navItems.map(({ to, label, icon }) => (
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === "/"}
+            title={isCollapsed ? label : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all duration-150 ${
+              `flex items-center font-semibold transition-all focus-visible:ring-2 focus-visible:ring-primary/70 ${
+                isCollapsed
+                  ? "justify-center w-12 h-12 rounded-full mx-auto"
+                  : "gap-4 px-4 py-3 rounded-full"
+              } ${
                 isActive
-                  ? 'bg-primary text-white shadow-pastel'
-                  : 'text-text-secondary hover:bg-background hover:text-text-primary'
+                  ? "bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               }`
             }
           >
-            <Icon size={18} />
-            {label}
+            <div className={isCollapsed ? "w-6 h-6 flex-shrink-0" : ""}>
+              {icon}
+            </div>
+            {!isCollapsed && (
+              <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                {label}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      {/* User info */}
-      {user && (
-        <div className="mt-4 pt-4 border-t border-border">
-          <div className="px-2 mb-2">
-            <p className="font-semibold text-sm text-text-primary truncate">{user.displayName}</p>
-            <p className="text-xs text-text-muted truncate">{user.email}</p>
-          </div>
-          <Button
-            type="text"
-            size="small"
+      {/* Bottom — Premium CTA or User */}
+      <div className="mt-auto pb-6">
+        {!user ? (
+          /* Guest */
+          isCollapsed ? (
+            <Link
+              to="/register"
+              title="Create Account"
+              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto border border-primary/30 glow-amber bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <svg
+                className="w-6 h-6 text-accent-amber"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </Link>
+          ) : (
+            <div
+              className="p-5 rounded-2xl border border-white/5 glow-amber flex-shrink-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(245,158,11,0.10), rgba(251,191,36,0.05))",
+              }}
+            >
+              <p className="text-[10px] font-black text-accent-gold uppercase tracking-[0.2em] mb-2 whitespace-nowrap">
+                Exclusive Access
+              </p>
+              <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                Sign up to unlock liked songs, playlists and your listening
+                history.
+              </p>
+              <Link to="/register">
+                <button className="w-full py-2.5 bg-gradient-to-r from-primary to-accent-amber text-white font-bold rounded-full text-sm hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20">
+                  Create Account
+                </button>
+              </Link>
+            </div>
+          )
+        ) : /* Logged-in */
+        isCollapsed ? (
+          <div
+            className="w-12 h-12 mx-auto rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm cursor-pointer hover:brightness-110"
             onClick={logout}
-            className="w-full text-text-secondary"
+            title="Sign Out"
           >
-            Sign Out
-          </Button>
-        </div>
-      )}
-    </div>
+            {user.displayName?.[0]?.toUpperCase() ?? "?"}
+          </div>
+        ) : (
+          <div className="pt-4 border-t border-white/10 flex-shrink-0">
+            <div className="flex items-center gap-3 px-2 mb-3">
+              <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {user.displayName?.[0]?.toUpperCase() ?? "?"}
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-sm text-white truncate">
+                  {user.displayName}
+                </p>
+                <p className="text-xs text-slate-400 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="w-full text-sm text-slate-400 hover:text-white py-2 rounded-full hover:bg-white/5 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

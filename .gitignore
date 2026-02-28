@@ -6,3 +6,5 @@ dist/
 .agent
 .flows
 .spec
+.shared
+.mockups
