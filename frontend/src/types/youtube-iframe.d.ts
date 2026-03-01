@@ -38,6 +38,7 @@ declare namespace YT {
     videoId?: string;
     width?: number | string;
     height?: number | string;
+    host?: string;
     playerVars?: PlayerVars;
     events?: Events;
   }
@@ -57,7 +58,10 @@ declare namespace YT {
   }
 
   class Player {
-    constructor(elementIdOrElement: string | HTMLElement, options: PlayerOptions);
+    constructor(
+      elementIdOrElement: string | HTMLElement,
+      options: PlayerOptions,
+    );
     loadVideoById(videoId: string, startSeconds?: number): void;
     cueVideoById(videoId: string, startSeconds?: number): void;
     playVideo(): void;

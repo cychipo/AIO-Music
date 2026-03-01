@@ -134,13 +134,31 @@ export const streamApi = {
     `${BASE_URL}/stream?url=${encodeURIComponent(`https://www.youtube.com/watch?v=${youtubeId}`)}`,
 };
 
+export interface AddTrackPayload {
+  title: string;
+  artist: string;
+  album?: string;
+  thumbnail?: string;
+  duration?: number;
+  sourceId: string;
+  source: string;
+  youtubeId?: string;
+  url?: string;
+}
+
 export const playlistApi = {
   getMy: () => apiClient.get('/playlists/my'),
   getPublic: () => apiClient.get('/playlists/public'),
+  getById: (playlistId: string) => apiClient.get(`/playlists/${playlistId}`),
   create: (data: { name: string; description?: string; isPublic?: boolean }) =>
     apiClient.post('/playlists', data),
-  addTrack: (playlistId: string, trackId: string) =>
-    apiClient.patch(`/playlists/${playlistId}/tracks/${trackId}`),
+  /**
+   * Thêm bài hát vào playlist.
+   * trackData chứa đầy đủ metadata của bài hát để backend có thể upsert vào Track collection.
+   * trackId trong URL chỉ mang tính mô tả (dùng sourceId), body mới là nguồn thật.
+   */
+  addTrack: (playlistId: string, trackData: AddTrackPayload) =>
+    apiClient.patch(`/playlists/${playlistId}/tracks/${encodeURIComponent(trackData.sourceId)}`, trackData),
   removeTrack: (playlistId: string, trackId: string) =>
     apiClient.delete(`/playlists/${playlistId}/tracks/${trackId}`),
   delete: (playlistId: string) =>

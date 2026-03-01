@@ -1,5 +1,6 @@
 import { NavLink, Link } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+import { usePlaylistStore } from "../../store/playlistStore";
 
 const navItems = [
   {
@@ -64,6 +65,7 @@ export default function Sidebar({
   isCollapsed?: boolean;
 }) {
   const { user, logout } = useAuthStore();
+  const { playlists } = usePlaylistStore();
 
   return (
     <>
@@ -119,6 +121,39 @@ export default function Sidebar({
           </NavLink>
         ))}
       </nav>
+
+      {/* Playlist list — chỉ hiện khi expanded và đã đăng nhập */}
+      {!isCollapsed && user && playlists.length > 0 && (
+        <div className="flex flex-col gap-1 flex-shrink-0">
+          <p className="px-4 text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 mb-1">
+            Playlists
+          </p>
+          <div className="flex flex-col gap-0.5 max-h-48 overflow-y-auto hide-scrollbar">
+            {playlists.map((pl) => (
+              <NavLink
+                key={pl._id}
+                to={`/library/playlist/${pl._id}`}
+                title={pl.name}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2 rounded-full text-sm transition-all truncate ${
+                    isActive
+                      ? 'bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`
+                }
+              >
+                {/* Mini thumbnail or gradient dot */}
+                <div className="w-4 h-4 flex-shrink-0 rounded-sm overflow-hidden bg-gradient-to-br from-primary/60 to-amber-400/40">
+                  {pl.thumbnail && (
+                    <img src={pl.thumbnail} alt="" className="w-full h-full object-cover" />
+                  )}
+                </div>
+                <span className="truncate font-medium">{pl.name}</span>
+              </NavLink>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bottom — Premium CTA or User */}
       <div className="mt-auto pb-6">

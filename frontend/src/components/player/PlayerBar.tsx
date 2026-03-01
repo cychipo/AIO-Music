@@ -41,6 +41,7 @@ function YouTubeEngine() {
       playerRef.current = new window.YT.Player(ytContainerId, {
         width: "1",
         height: "1",
+        host: "https://www.youtube-nocookie.com",
         playerVars: {
           autoplay: 1,
           controls: 0,
@@ -58,7 +59,9 @@ function YouTubeEngine() {
             if (destroyed) return;
             // Set YouTube volume về 100% — loudness được cân bằng
             // ở phía SoundCloud/Spotify bằng GainNode trong playerStore
-            playerRef.current!.setVolume(isMuted ? 0 : Math.round(volume * 100));
+            playerRef.current!.setVolume(
+              isMuted ? 0 : Math.round(volume * 100),
+            );
             initYouTubePlayer(playerRef.current!);
           },
           onStateChange: (e) => {
@@ -113,7 +116,11 @@ function YouTubeEngine() {
     return () => {
       destroyed = true;
       if (playerRef.current) {
-        try { playerRef.current.destroy(); } catch (_) { /* ignore */ }
+        try {
+          playerRef.current.destroy();
+        } catch (_) {
+          /* ignore */
+        }
         playerRef.current = null;
       }
     };
@@ -126,7 +133,15 @@ function YouTubeEngine() {
   return (
     <div
       aria-hidden="true"
-      style={{ position: "fixed", bottom: 0, left: 0, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        width: 1,
+        height: 1,
+        opacity: 0,
+        pointerEvents: "none",
+      }}
     >
       <div id={ytContainerId} />
     </div>
@@ -203,7 +218,12 @@ export default function PlayerBar() {
                 aria-label="Like this song"
                 className="hidden md:block ml-2 text-primary hover:scale-110 transition-transform focus-visible:ring-2 focus-visible:ring-primary rounded-full flex-shrink-0"
               >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
                   <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
@@ -215,8 +235,18 @@ export default function PlayerBar() {
                 aria-label="Like this song"
                 className="text-slate-400 hover:text-white p-2 transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
                 </svg>
               </button>
               <button
@@ -225,16 +255,40 @@ export default function PlayerBar() {
                 className="text-white p-2 hover:scale-105 transition-transform"
               >
                 {status === "loading" ? (
-                  <svg className="w-7 h-7 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  <svg
+                    className="w-7 h-7 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
                   </svg>
                 ) : isPlaying ? (
-                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-7 h-7"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                   </svg>
                 ) : (
-                  <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-8 h-8"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -252,8 +306,19 @@ export default function PlayerBar() {
                   className={`hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full ${isShuffled ? "text-primary" : ""}`}
                 >
                   {/* Shuffle icon — two crossed arrows */}
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"
+                    />
                   </svg>
                 </button>
 
@@ -263,7 +328,12 @@ export default function PlayerBar() {
                   aria-label="Previous"
                   className="hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full"
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
                   </svg>
                 </button>
@@ -275,16 +345,42 @@ export default function PlayerBar() {
                   className="size-12 rounded-full bg-gradient-to-br from-primary to-accent-amber text-white flex items-center justify-center hover:scale-110 transition-all shadow-xl shadow-primary/30 focus-visible:ring-2 focus-visible:ring-primary active:scale-95"
                 >
                   {status === "loading" ? (
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    <svg
+                      className="w-5 h-5 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
                     </svg>
                   ) : isPlaying ? (
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg
+                      className="w-6 h-6"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
                       <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                     </svg>
                   ) : (
-                    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <svg
+                      className="w-7 h-7"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   )}
@@ -296,7 +392,12 @@ export default function PlayerBar() {
                   aria-label="Next"
                   className="hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full"
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     <path d="M6 18l8.5-6L6 6v12zm2-8.14L11.03 12 8 14.14V9.86zM16 6h2v12h-2z" />
                   </svg>
                 </button>
@@ -308,11 +409,24 @@ export default function PlayerBar() {
                   aria-pressed={repeatMode !== "none"}
                   className={`hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full relative ${repeatMode !== "none" ? "text-primary" : ""}`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
                   </svg>
                   {repeatMode === "one" && (
-                    <span className="absolute -top-1 -right-1 text-[9px] font-bold text-primary leading-none">1</span>
+                    <span className="absolute -top-1 -right-1 text-[9px] font-bold text-primary leading-none">
+                      1
+                    </span>
                   )}
                 </button>
               </div>
@@ -335,8 +449,10 @@ export default function PlayerBar() {
                     seek(((e.clientX - rect.left) / rect.width) * duration);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "ArrowRight") seek(Math.min(duration, currentTime + 5));
-                    if (e.key === "ArrowLeft") seek(Math.max(0, currentTime - 5));
+                    if (e.key === "ArrowRight")
+                      seek(Math.min(duration, currentTime + 5));
+                    if (e.key === "ArrowLeft")
+                      seek(Math.max(0, currentTime - 5));
                   }}
                 >
                   <div
@@ -355,14 +471,42 @@ export default function PlayerBar() {
 
             {/* ── Desktop Volume & Extra ── */}
             <div className="hidden md:flex items-center justify-end gap-5 w-1/4 text-slate-400">
-              <button aria-label="Queue" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <button
+                aria-label="Queue"
+                className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
               </button>
-              <button aria-label="Devices" className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <button
+                aria-label="Devices"
+                className="hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-full"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
                 </svg>
               </button>
 
@@ -373,11 +517,27 @@ export default function PlayerBar() {
                   aria-label={isMuted ? "Unmute" : "Mute"}
                   className="hover:text-primary transition-colors flex-shrink-0 focus-visible:ring-2 focus-visible:ring-primary rounded-full"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     {isMuted || volume === 0 ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                      />
                     ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M8.586 8.586L5.05 12.05A7 7 0 005 12m3.586-3.414l.707-.707M12 6v.01" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M8.586 8.586L5.05 12.05A7 7 0 005 12m3.586-3.414l.707-.707M12 6v.01"
+                      />
                     )}
                   </svg>
                 </button>
@@ -394,15 +554,18 @@ export default function PlayerBar() {
                     setVolume((e.clientX - rect.left) / rect.width);
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === "ArrowRight") setVolume(Math.min(1, volume + 0.05));
-                    if (e.key === "ArrowLeft") setVolume(Math.max(0, volume - 0.05));
+                    if (e.key === "ArrowRight")
+                      setVolume(Math.min(1, volume + 0.05));
+                    if (e.key === "ArrowLeft")
+                      setVolume(Math.max(0, volume - 0.05));
                   }}
                 >
                   <div
                     className="absolute inset-y-0 left-0 rounded-full group-hover:brightness-110 transition-all"
                     style={{
                       width: `${isMuted ? 0 : volume * 100}%`,
-                      background: "linear-gradient(to right, rgba(255,126,33,0.8), #ff7e21)",
+                      background:
+                        "linear-gradient(to right, rgba(255,126,33,0.8), #ff7e21)",
                     }}
                   />
                 </div>

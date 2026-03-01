@@ -4,6 +4,7 @@ import MainLayout from "./components/layout/MainLayout";
 import HomePage from "./pages/HomePage";
 import SearchPage from "./pages/SearchPage";
 import LibraryPage from "./pages/LibraryPage";
+import PlaylistDetailPage from "./pages/PlaylistDetailPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -37,6 +38,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <LibraryPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="library/playlist/:id"
+          element={
+            <PrivateRoute>
+              <PlaylistDetailPage />
             </PrivateRoute>
           }
         />

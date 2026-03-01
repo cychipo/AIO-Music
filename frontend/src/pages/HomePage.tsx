@@ -1,12 +1,15 @@
+import { useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { usePlayerStore } from "../store/playerStore";
+import { usePlaylistStore } from "../store/playlistStore";
 import {
   useTrending,
   trendingTrackToPlayable,
   formatDuration,
 } from "../hooks/useTrending";
 import { TrendingTrack } from "../types";
+import type { AddTrackPayload } from "../lib/apiClient";
 
 // ─── Platform badge config ───────────────────────────────────────────────────
 
@@ -65,16 +68,52 @@ interface TrackCardProps {
   isPlaying: boolean;
 }
 
-function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) {
+function TrackCard({
+  track,
+  queue,
+  isCurrentTrack,
+  isPlaying,
+}: TrackCardProps) {
   const play = usePlayerStore((s) => s.play);
   const togglePlay = usePlayerStore((s) => s.togglePlay);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const openAddToPlaylist = usePlaylistStore((s) => s.openAddToPlaylist);
   const badge = PLATFORM_BADGE[track.source];
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickOut(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOut);
+    return () => document.removeEventListener("mousedown", onClickOut);
+  }, [menuOpen]);
 
   const handlePlay = () => {
-    if (isCurrentTrack) { togglePlay(); return; }
+    if (isCurrentTrack) {
+      togglePlay();
+      return;
+    }
     const playable = trendingTrackToPlayable(track);
     const playableQueue = queue.map(trendingTrackToPlayable);
     play(playable, playableQueue);
+  };
+
+  // Build AddTrackPayload đầy đủ để openAddToPlaylist có thể upsert Track trên backend
+  const trackPayload: AddTrackPayload = {
+    title: track.title,
+    artist: track.artist,
+    thumbnail: track.thumbnail,
+    duration: track.duration,
+    sourceId: track.id,
+    source: track.source,
+    youtubeId: track.youtubeId,
+    url: track.url,
   };
 
   return (
@@ -83,9 +122,10 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
       className={`
         group relative p-4 sm:p-5 rounded-2xl border cursor-pointer
         transition-all duration-200
-        ${isCurrentTrack
-          ? "bg-primary/10 border-primary/30"
-          : "bg-surface-dark hover:bg-surface-dark-light border-white/5 hover:border-white/10"
+        ${
+          isCurrentTrack
+            ? "bg-primary/10 border-primary/30"
+            : "bg-surface-dark hover:bg-surface-dark-light border-white/5 hover:border-white/10"
         }
       `}
     >
@@ -105,7 +145,11 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-            <svg className="w-10 h-10 text-slate-500" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-10 h-10 text-slate-500"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" />
             </svg>
           </div>
@@ -113,7 +157,11 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
 
         {/* Play button overlay */}
         <button
-          aria-label={isCurrentTrack && isPlaying ? `Pause ${track.title}` : `Play ${track.title}`}
+          aria-label={
+            isCurrentTrack && isPlaying
+              ? `Pause ${track.title}`
+              : `Play ${track.title}`
+          }
           className="
             absolute bottom-2 right-2 size-11 rounded-full
             bg-gradient-to-br from-primary to-accent-amber text-white shadow-xl
@@ -128,7 +176,11 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
               <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
             </svg>
           ) : (
-            <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-5 h-5 ml-0.5"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M8 5v14l11-7z" />
             </svg>
           )}
@@ -151,10 +203,12 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
       </div>
 
       {/* Title */}
-      <h3 className={`
+      <h3
+        className={`
         font-bold text-sm leading-tight mb-1 truncate transition-colors
         ${isCurrentTrack ? "text-primary" : "text-white group-hover:text-primary"}
-      `}>
+      `}
+      >
         {track.title}
       </h3>
 
@@ -163,7 +217,9 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
 
       {/* Footer: platform badge + duration */}
       <div className="flex items-center justify-between">
-        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>
+        <span
+          className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}
+        >
           {badge.icon}
           {badge.label}
         </span>
@@ -173,6 +229,51 @@ function TrackCard({ track, queue, isCurrentTrack, isPlaying }: TrackCardProps) 
           </span>
         )}
       </div>
+
+      {/* 3-dot menu — chỉ khi đã đăng nhập */}
+      {isAuthenticated && (
+        <div
+          className="absolute top-3 right-3"
+          ref={menuRef}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="w-7 h-7 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
+            aria-label="Thêm tùy chọn"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+            </svg>
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-[#1e140b] border border-white/10 rounded-xl shadow-2xl z-20 overflow-hidden">
+              <button
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-white/8 transition-colors text-left"
+                onClick={() => {
+                  openAddToPlaylist(trackPayload);
+                  setMenuOpen(false);
+                }}
+              >
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Thêm vào playlist
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </article>
   );
 }
@@ -209,7 +310,8 @@ export default function HomePage() {
 
   const isCurrentTrackFn = (track: TrendingTrack) => {
     if (!currentTrack) return false;
-    const ctId = "id" in currentTrack ? currentTrack.id : (currentTrack as any)._id;
+    const ctId =
+      "id" in currentTrack ? currentTrack.id : (currentTrack as any)._id;
     const ctYtId = (currentTrack as any).youtubeId;
     return (
       ctId === (track.youtubeId || track.id) ||
@@ -257,7 +359,12 @@ export default function HomePage() {
             style={{ paddingTop: "16px" }}
           >
             <span className="flex items-center gap-2 text-accent-gold font-bold text-xs uppercase tracking-[0.3em] mb-4">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <svg
+                className="w-4 h-4"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {user ? `${greeting}, ${user.displayName}` : "Trending Now"}
@@ -270,13 +377,19 @@ export default function HomePage() {
             </h1>
 
             <p className="hidden sm:block text-slate-300 max-w-md mb-6 lg:mb-10 text-sm lg:text-lg font-light leading-relaxed">
-              Stream from YouTube, Spotify & SoundCloud — all without switching apps.
+              Stream from YouTube, Spotify & SoundCloud — all without switching
+              apps.
             </p>
 
             <div className="flex gap-3">
               <Link to="/search">
                 <button className="px-5 sm:px-8 lg:px-10 py-3 sm:py-4 bg-gradient-to-r from-primary to-accent-amber text-white font-bold rounded-full flex items-center gap-2 hover:scale-105 transition-all shadow-2xl shadow-primary/40 text-sm sm:text-base">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg
+                    className="w-4 h-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
                     <path d="M8 5v14l11-7z" />
                   </svg>
                   Listen Now
@@ -304,21 +417,43 @@ export default function HomePage() {
             className="text-sm font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1"
           >
             See all
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </Link>
         </div>
 
         {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6">
-            {Array.from({ length: 12 }).map((_, i) => <CardSkeleton key={i} />)}
+            {Array.from({ length: 12 }).map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
           </div>
         ) : allTracks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
-            <svg className="w-12 h-12 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+            <svg
+              className="w-12 h-12 opacity-30"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+              />
             </svg>
             <p className="text-base font-medium">No trending data available</p>
             <button
@@ -330,9 +465,9 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6">
-            {allTracks.map((track) => (
+            {allTracks.map((track, i) => (
               <TrackCard
-                key={`${track.source}-${track.id}`}
+                key={`${track.source}-${track.id}-${i}`}
                 track={track}
                 queue={allTracks}
                 isCurrentTrack={isCurrentTrackFn(track)}

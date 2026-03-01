@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { useGoogleOneTap } from "../../hooks/useGoogleOneTap";
 import UserAccountWidget from "../UserAccountWidget";
+import AddToPlaylistModal from "../AddToPlaylistModal";
 import Sidebar from "./Sidebar";
 import PlayerBar from "../player/PlayerBar";
 
@@ -260,6 +261,9 @@ export default function MainLayout() {
         {/* ── Player Bar ── */}
         <PlayerBar />
       </main>
+
+      {/* ── Global modals ── */}
+      <AddToPlaylistModal />
     </div>
   );
 }

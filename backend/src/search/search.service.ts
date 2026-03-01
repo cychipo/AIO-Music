@@ -13,6 +13,7 @@ export interface SearchResult {
   duration: number;
   source: "youtube" | "spotify" | "soundcloud";
   youtubeId?: string; // Resolved for Spotify tracks
+  url?: string;       // Permalink (SoundCloud, etc.)
 }
 
 @Injectable()
