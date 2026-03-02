@@ -1,32 +1,58 @@
-import { useState } from 'react';
-import { usePlaylistStore } from '../store/playlistStore';
-import type { Playlist } from '../types';
+import { useState } from "react";
+import { usePlaylistStore } from "../store/playlistStore";
+import type { Playlist } from "../types";
 
 /* ── Icons ── */
 function IconClose() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 18L18 6M6 6l12 12"
+      />
     </svg>
   );
 }
 function IconMusic() {
   return (
-    <svg className="w-6 h-6 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-6 h-6 text-white/40"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
     </svg>
   );
 }
 function IconCheck() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      viewBox="0 0 24 24"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   );
 }
 function IconPlus() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
     </svg>
   );
@@ -43,13 +69,17 @@ export default function AddToPlaylistModal() {
     createPlaylist,
   } = usePlaylistStore();
 
-  const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(null);
-  const [addedPlaylistIds, setAddedPlaylistIds] = useState<Set<string>>(new Set());
-  const [errorMsg, setErrorMsg] = useState('');
+  const [loadingPlaylistId, setLoadingPlaylistId] = useState<string | null>(
+    null,
+  );
+  const [addedPlaylistIds, setAddedPlaylistIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [errorMsg, setErrorMsg] = useState("");
 
   // Tạo playlist nhanh
   const [showQuickCreate, setShowQuickCreate] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
   if (!pendingTrack) return null;
@@ -58,16 +88,18 @@ export default function AddToPlaylistModal() {
     if (!pendingTrack) return;
 
     // "Đã có" nếu sourceId của track khớp với sourceId của bất kỳ track nào trong playlist
-    const alreadyIn = playlist.tracks.some((t) => t.sourceId === pendingTrack.sourceId);
+    const alreadyIn = playlist.tracks.some(
+      (t) => t.sourceId === pendingTrack.sourceId,
+    );
     if (alreadyIn || addedPlaylistIds.has(playlist._id)) return;
 
     setLoadingPlaylistId(playlist._id);
-    setErrorMsg('');
+    setErrorMsg("");
     try {
       await addTrack(playlist._id, pendingTrack);
       setAddedPlaylistIds((prev) => new Set(prev).add(playlist._id));
     } catch {
-      setErrorMsg('Thêm vào playlist thất bại. Vui lòng thử lại.');
+      setErrorMsg("Thêm vào playlist thất bại. Vui lòng thử lại.");
     } finally {
       setLoadingPlaylistId(null);
     }
@@ -77,15 +109,15 @@ export default function AddToPlaylistModal() {
     e.preventDefault();
     if (!newName.trim() || !pendingTrack) return;
     setCreating(true);
-    setErrorMsg('');
+    setErrorMsg("");
     try {
       const created = await createPlaylist({ name: newName.trim() });
       await addTrack(created._id, pendingTrack);
       setAddedPlaylistIds((prev) => new Set(prev).add(created._id));
-      setNewName('');
+      setNewName("");
       setShowQuickCreate(false);
     } catch {
-      setErrorMsg('Tạo playlist thất bại. Vui lòng thử lại.');
+      setErrorMsg("Tạo playlist thất bại. Vui lòng thử lại.");
     } finally {
       setCreating(false);
     }
@@ -112,7 +144,9 @@ export default function AddToPlaylistModal() {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
           <div className="min-w-0">
             <h2 className="font-bold text-base">Thêm vào playlist</h2>
-            <p className="text-xs text-slate-400 truncate mt-0.5">{pendingTrack.title}</p>
+            <p className="text-xs text-slate-400 truncate mt-0.5">
+              {pendingTrack.title}
+            </p>
           </div>
           <button
             onClick={closeAddToPlaylist}
@@ -147,8 +181,8 @@ export default function AddToPlaylistModal() {
                   disabled={added || loading}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
                     added
-                      ? 'opacity-60 cursor-default'
-                      : 'hover:bg-white/8 cursor-pointer'
+                      ? "opacity-60 cursor-default"
+                      : "hover:bg-white/8 cursor-pointer"
                   }`}
                 >
                   {/* Thumbnail */}
@@ -168,8 +202,12 @@ export default function AddToPlaylistModal() {
 
                   {/* Name + count */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate text-white">{playlist.name}</p>
-                    <p className="text-xs text-slate-400">{playlist.tracks.length} bài</p>
+                    <p className="text-sm font-semibold truncate text-white">
+                      {playlist.name}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {playlist.tracks.length} bài
+                    </p>
                   </div>
 
                   {/* Status indicator */}
@@ -213,7 +251,7 @@ export default function AddToPlaylistModal() {
                 disabled={creating || !newName.trim()}
                 className="px-4 py-2 rounded-[10px] bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-colors disabled:opacity-50"
               >
-                {creating ? '...' : 'Tạo'}
+                {creating ? "..." : "Tạo"}
               </button>
               <button
                 type="button"

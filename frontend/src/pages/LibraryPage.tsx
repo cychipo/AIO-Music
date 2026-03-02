@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Popconfirm } from 'antd';
-import { usePlaylistStore } from '../store/playlistStore';
-import type { Playlist } from '../types';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Popconfirm } from "antd";
+import { usePlaylistStore } from "../store/playlistStore";
+import type { Playlist } from "../types";
 
 /* ── Icons ── */
 function IconMusic() {
   return (
-    <svg className="w-12 h-12 text-white/60" fill="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-12 h-12 text-white/60"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
     </svg>
   );
@@ -21,22 +25,48 @@ function IconPlay() {
 }
 function IconPlus() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
     </svg>
   );
 }
 function IconTrash() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+      />
     </svg>
   );
 }
 function IconClose() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 18L18 6M6 6l12 12"
+      />
     </svg>
   );
 }
@@ -44,25 +74,32 @@ function IconClose() {
 /* ── Create Playlist Modal ── */
 interface CreateModalProps {
   onClose: () => void;
-  onCreate: (name: string, description: string, isPublic: boolean) => Promise<void>;
+  onCreate: (
+    name: string,
+    description: string,
+    isPublic: boolean,
+  ) => Promise<void>;
 }
 function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) { setError('Tên playlist không được để trống'); return; }
+    if (!name.trim()) {
+      setError("Tên playlist không được để trống");
+      return;
+    }
     setLoading(true);
-    setError('');
+    setError("");
     try {
       await onCreate(name.trim(), description.trim(), isPublic);
       onClose();
     } catch {
-      setError('Tạo playlist thất bại. Vui lòng thử lại.');
+      setError("Tạo playlist thất bại. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +117,10 @@ function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold">Tạo playlist mới</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+          >
             <IconClose />
           </button>
         </div>
@@ -88,7 +128,9 @@ function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Tên */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Tên playlist *</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+              Tên playlist *
+            </label>
             <input
               type="text"
               value={name}
@@ -101,7 +143,9 @@ function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
 
           {/* Mô tả */}
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">Mô tả</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wider">
+              Mô tả
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -116,13 +160,17 @@ function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
           <label className="flex items-center justify-between cursor-pointer py-2">
             <div>
               <p className="text-sm font-semibold">Công khai</p>
-              <p className="text-xs text-slate-400">Mọi người có thể tìm kiếm và nghe playlist này</p>
+              <p className="text-xs text-slate-400">
+                Mọi người có thể tìm kiếm và nghe playlist này
+              </p>
             </div>
             <div
               onClick={() => setIsPublic((v) => !v)}
-              className={`relative w-12 h-6 rounded-full transition-colors ${isPublic ? 'bg-primary' : 'bg-white/20'}`}
+              className={`relative w-12 h-6 rounded-full transition-colors ${isPublic ? "bg-primary" : "bg-white/20"}`}
             >
-              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${isPublic ? 'left-7' : 'left-1'}`} />
+              <span
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${isPublic ? "left-7" : "left-1"}`}
+              />
             </div>
           </label>
 
@@ -133,7 +181,7 @@ function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
             disabled={loading}
             className="w-full py-3 rounded-xl font-bold text-sm bg-primary hover:bg-primary/90 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Đang tạo...' : 'Tạo playlist'}
+            {loading ? "Đang tạo..." : "Tạo playlist"}
           </button>
         </form>
       </div>
@@ -180,14 +228,18 @@ function PlaylistCard({ playlist, onDelete }: PlaylistCardProps) {
       {/* Info */}
       <h4 className="font-bold text-sm truncate text-white">{playlist.name}</h4>
       <p className="text-xs text-slate-400 truncate mt-0.5">
-        {playlist.tracks.length} bài · {playlist.isPublic ? 'Công khai' : 'Riêng tư'}
+        {playlist.tracks.length} bài ·{" "}
+        {playlist.isPublic ? "Công khai" : "Riêng tư"}
       </p>
 
       {/* Delete button — dùng Popconfirm của antd */}
       <Popconfirm
         title="Xoá playlist"
         description={`Bạn có chắc muốn xoá "${playlist.name}"?`}
-        onConfirm={(e) => { e?.stopPropagation(); onDelete(playlist._id); }}
+        onConfirm={(e) => {
+          e?.stopPropagation();
+          onDelete(playlist._id);
+        }}
         onCancel={(e) => e?.stopPropagation()}
         okText="Xoá"
         cancelText="Huỷ"
@@ -206,36 +258,50 @@ function PlaylistCard({ playlist, onDelete }: PlaylistCardProps) {
 }
 
 /* ── Tabs ── */
-type Tab = 'playlists' | 'artists' | 'albums' | 'downloaded';
+type Tab = "playlists" | "artists" | "albums" | "downloaded";
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'playlists', label: 'Playlists' },
-  { id: 'artists', label: 'Nghệ sĩ' },
-  { id: 'albums', label: 'Albums' },
-  { id: 'downloaded', label: 'Đã tải' },
+  { id: "playlists", label: "Playlists" },
+  { id: "artists", label: "Nghệ sĩ" },
+  { id: "albums", label: "Albums" },
+  { id: "downloaded", label: "Đã tải" },
 ];
 
 /* ── LibraryPage ── */
 export default function LibraryPage() {
-  const { playlists, isLoading, error, fetchMyPlaylists, createPlaylist, deletePlaylist } =
-    usePlaylistStore();
-  const [activeTab, setActiveTab] = useState<Tab>('playlists');
+  const {
+    playlists,
+    isLoading,
+    error,
+    fetchMyPlaylists,
+    createPlaylist,
+    deletePlaylist,
+  } = usePlaylistStore();
+  const [activeTab, setActiveTab] = useState<Tab>("playlists");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     fetchMyPlaylists();
   }, [fetchMyPlaylists]);
 
-  async function handleCreate(name: string, description: string, isPublic: boolean) {
-    await createPlaylist({ name, description: description || undefined, isPublic });
+  async function handleCreate(
+    name: string,
+    description: string,
+    isPublic: boolean,
+  ) {
+    await createPlaylist({
+      name,
+      description: description || undefined,
+      isPublic,
+    });
   }
 
   async function handleDelete(playlistId: string) {
     try {
       await deletePlaylist(playlistId);
     } catch {
-      setDeleteError('Xoá playlist thất bại. Vui lòng thử lại.');
-      setTimeout(() => setDeleteError(''), 3000);
+      setDeleteError("Xoá playlist thất bại. Vui lòng thử lại.");
+      setTimeout(() => setDeleteError(""), 3000);
     }
   }
 
@@ -247,19 +313,32 @@ export default function LibraryPage() {
       <div className="flex items-end gap-6 sm:gap-8 py-8 mb-8">
         {/* Cover art */}
         <div className="w-36 h-36 sm:w-48 sm:h-48 flex-shrink-0 rounded-2xl bg-gradient-to-br from-primary to-amber-400 shadow-2xl shadow-primary/30 flex items-center justify-center">
-          <svg className="w-16 h-16 sm:w-20 sm:h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
+          <svg
+            className="w-16 h-16 sm:w-20 sm:h-20 text-white"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
         </div>
 
         {/* Meta */}
         <div className="flex flex-col gap-2 min-w-0">
-          <span className="text-xs font-bold uppercase tracking-widest text-primary">Thư viện</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-primary">
+            Thư viện
+          </span>
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 leading-none">
             Your Library
           </h1>
           <p className="text-sm text-slate-400 mt-2">
-            <span className="font-bold text-white">{playlists.length}</span> playlist ·{' '}
+            <span className="font-bold text-white">{playlists.length}</span>{" "}
+            playlist ·{" "}
             <span className="font-bold text-white">{totalTracks}</span> bài hát
           </p>
         </div>
@@ -273,8 +352,8 @@ export default function LibraryPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`pb-3 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all border-b-2 whitespace-nowrap ${
               activeTab === tab.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-slate-400 hover:text-white'
+                ? "border-primary text-primary"
+                : "border-transparent text-slate-400 hover:text-white"
             }`}
           >
             {tab.label}
@@ -283,7 +362,7 @@ export default function LibraryPage() {
       </div>
 
       {/* ── Playlists Tab ── */}
-      {activeTab === 'playlists' && (
+      {activeTab === "playlists" && (
         <>
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -307,7 +386,10 @@ export default function LibraryPage() {
           {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="aspect-square rounded-2xl bg-white/5 animate-pulse" />
+                <div
+                  key={i}
+                  className="aspect-square rounded-2xl bg-white/5 animate-pulse"
+                />
               ))}
             </div>
           )}
@@ -332,7 +414,9 @@ export default function LibraryPage() {
                 <IconMusic />
               </div>
               <h3 className="text-lg font-bold mb-2">Chưa có playlist nào</h3>
-              <p className="text-slate-400 text-sm mb-6">Tạo playlist đầu tiên để bắt đầu lưu nhạc yêu thích của bạn.</p>
+              <p className="text-slate-400 text-sm mb-6">
+                Tạo playlist đầu tiên để bắt đầu lưu nhạc yêu thích của bạn.
+              </p>
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm transition-colors"
@@ -347,7 +431,11 @@ export default function LibraryPage() {
           {!isLoading && !error && playlists.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
               {playlists.map((playlist) => (
-                <PlaylistCard key={playlist._id} playlist={playlist} onDelete={handleDelete} />
+                <PlaylistCard
+                  key={playlist._id}
+                  playlist={playlist}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
           )}
@@ -355,9 +443,13 @@ export default function LibraryPage() {
       )}
 
       {/* ── Coming Soon tabs ── */}
-      {activeTab !== 'playlists' && (
+      {activeTab !== "playlists" && (
         <div className="flex flex-col items-center justify-center py-24 text-slate-500">
-          <svg className="w-16 h-16 mb-4 opacity-30" fill="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-16 h-16 mb-4 opacity-30"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
           </svg>
           <p className="text-lg font-semibold">Sắp ra mắt</p>

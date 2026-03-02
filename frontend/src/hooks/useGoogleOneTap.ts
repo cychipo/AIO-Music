@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { authApi } from '../lib/apiClient';
+import { useEffect } from "react";
+import { useAuthStore } from "../store/authStore";
+import { authApi } from "../lib/apiClient";
 
 // Mở rộng Window để tránh TS lỗi khi truy cập google.accounts
 declare global {
@@ -56,7 +56,7 @@ export function useGoogleOneTap() {
             const { accessToken, refreshToken } = res.data;
             await loginWithOAuth(accessToken, refreshToken);
           } catch (err) {
-            console.error('[GoogleOneTap] Đăng nhập thất bại:', err);
+            console.error("[GoogleOneTap] Đăng nhập thất bại:", err);
           }
         },
         // Hiện prompt ngay, không delay
@@ -79,11 +79,11 @@ export function useGoogleOneTap() {
       init();
     } else {
       // Script chưa load — chờ sự kiện load
-      window.addEventListener('load', init, { once: true });
+      window.addEventListener("load", init, { once: true });
     }
 
     return () => {
-      window.removeEventListener('load', init);
+      window.removeEventListener("load", init);
       window.google?.accounts?.id?.cancel();
     };
   }, [isAuthenticated, loginWithOAuth]);

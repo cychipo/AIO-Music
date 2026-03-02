@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
+import { useState, useRef, useEffect } from "react";
+import { useAuthStore } from "../store/authStore";
 
 /**
  * Widget góc phải — hiển thị khi đã đăng nhập:
@@ -22,17 +22,20 @@ export default function UserAccountWidget() {
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
   if (!isAuthenticated || !user) return null;
 
-  const initials = user.displayName?.[0]?.toUpperCase() ?? '?';
+  const initials = user.displayName?.[0]?.toUpperCase() ?? "?";
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -64,8 +67,10 @@ export default function UserAccountWidget() {
             className="w-9 h-9 rounded-full object-cover border-2 border-primary/50 ring-2 ring-primary/10 flex-shrink-0"
           />
         ) : (
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-primary/50 ring-2 ring-primary/10 flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #FF6F00, #e65100)' }}>
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm border-2 border-primary/50 ring-2 ring-primary/10 flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #FF6F00, #e65100)" }}
+          >
             {initials}
           </div>
         )}
@@ -75,10 +80,18 @@ export default function UserAccountWidget() {
         </span>
         {/* Chevron */}
         <svg
-          className={`hidden md:block w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"
+          className={`hidden md:block w-4 h-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -87,16 +100,18 @@ export default function UserAccountWidget() {
         <div
           className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl z-50 py-1 overflow-hidden"
           style={{
-            background: 'rgba(34, 24, 16, 0.97)',
-            border: '1px solid rgba(255, 111, 0, 0.15)',
-            backdropFilter: 'blur(12px)',
+            background: "rgba(34, 24, 16, 0.97)",
+            border: "1px solid rgba(255, 111, 0, 0.15)",
+            backdropFilter: "blur(12px)",
           }}
           role="menu"
           aria-label="Menu tài khoản"
         >
           {/* Info */}
           <div className="px-4 py-3 border-b border-white/5">
-            <p className="text-sm font-semibold text-white truncate">{user.displayName}</p>
+            <p className="text-sm font-semibold text-white truncate">
+              {user.displayName}
+            </p>
             <p className="text-xs text-slate-400 truncate">{user.email}</p>
           </div>
 
@@ -109,17 +124,43 @@ export default function UserAccountWidget() {
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
           >
             {loggingOut ? (
-              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              <svg
+                className="w-4 h-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
               </svg>
             )}
-            {loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
+            {loggingOut ? "Đang đăng xuất…" : "Đăng xuất"}
           </button>
         </div>
       )}

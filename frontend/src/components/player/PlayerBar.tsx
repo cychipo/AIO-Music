@@ -41,7 +41,6 @@ function YouTubeEngine() {
       playerRef.current = new window.YT.Player(ytContainerId, {
         width: "1",
         height: "1",
-        host: "https://www.youtube-nocookie.com",
         playerVars: {
           autoplay: 1,
           controls: 0,

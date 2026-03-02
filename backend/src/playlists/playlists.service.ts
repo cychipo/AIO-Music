@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Playlist, PlaylistDocument } from '../common/schemas/playlist.schema';
-import { Track, TrackDocument, TrackSource } from '../common/schemas/track.schema';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { Playlist, PlaylistDocument } from "../common/schemas/playlist.schema";
+import {
+  Track,
+  TrackDocument,
+  TrackSource,
+} from "../common/schemas/track.schema";
 
 /** Payload gửi lên khi thêm bài hát vào playlist */
 export interface AddTrackDto {
@@ -11,7 +19,7 @@ export interface AddTrackDto {
   album?: string;
   thumbnail?: string;
   duration?: number;
-  sourceId: string;              // YouTube video ID, Spotify track ID, ...
+  sourceId: string; // YouTube video ID, Spotify track ID, ...
   source: TrackSource | string;
   youtubeId?: string;
   url?: string;
@@ -21,7 +29,7 @@ export interface AddTrackDto {
 export class PlaylistsService {
   constructor(
     @InjectModel(Playlist.name) private playlistModel: Model<PlaylistDocument>,
-    @InjectModel(Track.name)    private trackModel:    Model<TrackDocument>,
+    @InjectModel(Track.name) private trackModel: Model<TrackDocument>,
   ) {}
 
   // ── Playlist CRUD ───────────────────────────────────────────────────────────
@@ -29,17 +37,20 @@ export class PlaylistsService {
   async findByOwner(userId: string): Promise<PlaylistDocument[]> {
     return this.playlistModel
       .find({ owner: new Types.ObjectId(userId) })
-      .populate('tracks');
+      .populate("tracks");
   }
 
-  async findById(userId: string, playlistId: string): Promise<PlaylistDocument> {
+  async findById(
+    userId: string,
+    playlistId: string,
+  ): Promise<PlaylistDocument> {
     if (!Types.ObjectId.isValid(playlistId)) {
-      throw new NotFoundException('Playlist not found');
+      throw new NotFoundException("Playlist not found");
     }
     const playlist = await this.playlistModel
       .findById(playlistId)
-      .populate('tracks');
-    if (!playlist) throw new NotFoundException('Playlist not found');
+      .populate("tracks");
+    if (!playlist) throw new NotFoundException("Playlist not found");
     if (String(playlist.owner) !== userId) throw new ForbiddenException();
     return playlist;
   }
@@ -47,10 +58,13 @@ export class PlaylistsService {
   async findPublic(): Promise<PlaylistDocument[]> {
     return this.playlistModel
       .find({ isPublic: true })
-      .populate('owner', 'displayName avatar');
+      .populate("owner", "displayName avatar");
   }
 
-  async create(userId: string, data: Partial<Playlist>): Promise<PlaylistDocument> {
+  async create(
+    userId: string,
+    data: Partial<Playlist>,
+  ): Promise<PlaylistDocument> {
     return this.playlistModel.create({
       ...data,
       owner: new Types.ObjectId(userId),
@@ -78,7 +92,7 @@ export class PlaylistsService {
         { $addToSet: { tracks: track._id } },
         { new: true },
       )
-      .populate('tracks');
+      .populate("tracks");
   }
 
   /**
@@ -93,7 +107,7 @@ export class PlaylistsService {
     await this.findOwned(userId, playlistId);
 
     if (!Types.ObjectId.isValid(trackId)) {
-      throw new NotFoundException('trackId không hợp lệ');
+      throw new NotFoundException("trackId không hợp lệ");
     }
 
     return this.playlistModel
@@ -102,7 +116,7 @@ export class PlaylistsService {
         { $pull: { tracks: new Types.ObjectId(trackId) } },
         { new: true },
       )
-      .populate('tracks');
+      .populate("tracks");
   }
 
   async delete(userId: string, playlistId: string): Promise<void> {
@@ -121,19 +135,19 @@ export class PlaylistsService {
     const update = {
       // Luôn update metadata để fix trường hợp track cũ bị lưu thiếu data
       $set: {
-        title:     data.title,
-        artist:    data.artist,
-        album:     data.album     ?? '',
-        thumbnail: data.thumbnail ?? '',
-        duration:  data.duration  ?? 0,
-        youtubeId: data.youtubeId ?? '',
+        title: data.title,
+        artist: data.artist,
+        album: data.album ?? "",
+        thumbnail: data.thumbnail ?? "",
+        duration: data.duration ?? 0,
+        youtubeId: data.youtubeId ?? "",
       },
       // Chỉ set các field cố định khi insert lần đầu
       $setOnInsert: {
-        sourceId:  data.sourceId,
-        source:    data.source,
+        sourceId: data.sourceId,
+        source: data.source,
         playCount: 0,
-        tags:      [],
+        tags: [],
       },
     };
     return this.trackModel.findOneAndUpdate(filter, update, {
@@ -142,12 +156,15 @@ export class PlaylistsService {
     });
   }
 
-  private async findOwned(userId: string, playlistId: string): Promise<PlaylistDocument> {
+  private async findOwned(
+    userId: string,
+    playlistId: string,
+  ): Promise<PlaylistDocument> {
     if (!Types.ObjectId.isValid(playlistId)) {
-      throw new NotFoundException('Playlist not found');
+      throw new NotFoundException("Playlist not found");
     }
     const playlist = await this.playlistModel.findById(playlistId);
-    if (!playlist) throw new NotFoundException('Playlist not found');
+    if (!playlist) throw new NotFoundException("Playlist not found");
     if (String(playlist.owner) !== userId) throw new ForbiddenException();
     return playlist;
   }

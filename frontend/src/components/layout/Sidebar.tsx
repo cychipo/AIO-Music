@@ -137,15 +137,19 @@ export default function Sidebar({
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-4 py-2 rounded-full text-sm transition-all truncate ${
                     isActive
-                      ? 'bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      ? "bg-gradient-to-r from-primary/20 to-transparent text-primary border border-primary/20"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
                   }`
                 }
               >
                 {/* Mini thumbnail or gradient dot */}
                 <div className="w-4 h-4 flex-shrink-0 rounded-sm overflow-hidden bg-gradient-to-br from-primary/60 to-amber-400/40">
                   {pl.thumbnail && (
-                    <img src={pl.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <img
+                      src={pl.thumbnail}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
                   )}
                 </div>
                 <span className="truncate font-medium">{pl.name}</span>

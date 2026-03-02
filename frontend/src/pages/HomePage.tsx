@@ -4,7 +4,7 @@ import { useAuthStore } from "../store/authStore";
 import { usePlayerStore } from "../store/playerStore";
 import { usePlaylistStore } from "../store/playlistStore";
 import {
-  useTrending,
+  useTrendingPlatform,
   trendingTrackToPlayable,
   formatDuration,
 } from "../hooks/useTrending";
@@ -163,11 +163,11 @@ function TrackCard({
               : `Play ${track.title}`
           }
           className="
-            absolute bottom-2 right-2 size-11 rounded-full
+            absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-12 rounded-full
             bg-gradient-to-br from-primary to-accent-amber text-white shadow-xl
-            opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0
+            opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-105
             transition-all duration-200 flex items-center justify-center
-            hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary z-20
           "
         >
           {isCurrentTrack && isPlaying ? (
@@ -188,12 +188,12 @@ function TrackCard({
 
         {/* Playing indicator overlay */}
         {isCurrentTrack && isPlaying && (
-          <div className="absolute inset-0 bg-primary/10 flex items-end justify-start p-2 pointer-events-none">
-            <span className="flex items-end gap-px h-5">
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none z-10 transition-all">
+            <span className="flex items-end gap-1 h-6">
               {[60, 100, 40, 80, 60].map((h, i) => (
                 <span
                   key={i}
-                  className="w-1 bg-primary rounded-full animate-[bounce_0.6s_ease-in-out_infinite]"
+                  className="w-1.5 bg-primary rounded-full animate-[bounce_0.6s_ease-in-out_infinite]"
                   style={{ height: `${h}%`, animationDelay: `${i * 80}ms` }}
                 />
               ))}
@@ -289,24 +289,21 @@ export default function HomePage() {
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
-  const { data, isLoading, refetch } = useTrending(10);
+  // Tabs state
+  const [activeTab, setActiveTab] = useState<
+    "youtube" | "spotify" | "soundcloud"
+  >("youtube");
+  const [tabLimits, setTabLimits] = useState({
+    youtube: 12,
+    spotify: 12,
+    soundcloud: 12,
+  });
 
-  // Gộp cả 3 nguồn thành 1 mảng phẳng, xen kẽ (1 YT, 1 SP, 1 SC...)
-  // để homepage trông đa dạng chứ không bị lặp nguồn
-  const allTracks: TrendingTrack[] = (() => {
-    if (!data) return [];
-    const yt = data.youtube;
-    const sp = data.spotify;
-    const sc = data.soundcloud;
-    const merged: TrendingTrack[] = [];
-    const len = Math.max(yt.length, sp.length, sc.length);
-    for (let i = 0; i < len; i++) {
-      if (yt[i]) merged.push(yt[i]);
-      if (sp[i]) merged.push(sp[i]);
-      if (sc[i]) merged.push(sc[i]);
-    }
-    return merged;
-  })();
+  const {
+    data: allTracks,
+    isLoading,
+    refetch,
+  } = useTrendingPlatform(activeTab, tabLimits[activeTab]);
 
   const isCurrentTrackFn = (track: TrendingTrack) => {
     if (!currentTrack) return false;
@@ -319,8 +316,15 @@ export default function HomePage() {
     );
   };
 
+  const loadMore = () => {
+    setTabLimits((prev) => ({
+      ...prev,
+      [activeTab]: prev[activeTab] + 12,
+    }));
+  };
+
   return (
-    <div className="font-sans">
+    <div className="font-sans pb-12">
       {/* ── Hero Banner ── */}
       <section className="mb-8 sm:mb-12">
         <div className="relative h-[220px] sm:h-[280px] lg:h-[340px] w-full rounded-2xl sm:rounded-[2.5rem] overflow-hidden group border border-white/5">
@@ -395,49 +399,44 @@ export default function HomePage() {
                   Listen Now
                 </button>
               </Link>
-              <button
-                onClick={refetch}
-                className="px-5 sm:px-8 lg:px-10 py-3 sm:py-4 bg-white/10 backdrop-blur-md text-white border border-white/20 font-bold rounded-full hover:bg-white/20 transition-all text-sm sm:text-base"
-              >
-                Top Charts
-              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Trending Charts ── */}
-      <section className="mb-12">
-        <div className="flex items-center justify-between mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white">
+      <section>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white flex-shrink-0">
             Trending Now
           </h2>
-          <Link
-            to="/search"
-            className="text-sm font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1"
-          >
-            See all
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </Link>
+
+          {/* Tabs */}
+          <div className="flex items-center gap-2 sm:gap-3 bg-white/5 p-1 rounded-full border border-white/10 overflow-x-auto hide-scrollbar">
+            {(["youtube", "spotify", "soundcloud"] as const).map((platform) => (
+              <button
+                key={platform}
+                onClick={() => setActiveTab(platform)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize whitespace-nowrap
+                  ${
+                    activeTab === platform
+                      ? `bg-white/10 text-white shadow-lg ${PLATFORM_BADGE[platform].cls.replace("bg-", "border-").split(" ")[2]}`
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }
+                `}
+              >
+                {PLATFORM_BADGE[platform].icon}
+                {platform}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {isLoading ? (
+        {isLoading && tabLimits[activeTab] === 12 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6">
             {Array.from({ length: 12 }).map((_, i) => (
-              <CardSkeleton key={i} />
+              <CardSkeleton key={`skeleton-${i}`} />
             ))}
           </div>
         ) : allTracks.length === 0 ? (
@@ -455,7 +454,9 @@ export default function HomePage() {
                 d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
               />
             </svg>
-            <p className="text-base font-medium">No trending data available</p>
+            <p className="text-base font-medium">
+              No trending data available for {activeTab}
+            </p>
             <button
               onClick={refetch}
               className="mt-1 text-sm text-primary hover:underline"
@@ -464,17 +465,58 @@ export default function HomePage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6">
-            {allTracks.map((track, i) => (
-              <TrackCard
-                key={`${track.source}-${track.id}-${i}`}
-                track={track}
-                queue={allTracks}
-                isCurrentTrack={isCurrentTrackFn(track)}
-                isPlaying={status === "playing"}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-5 lg:gap-6 mb-8">
+              {allTracks.map((track, i) => (
+                <TrackCard
+                  key={`${track.source}-${track.id}-${i}`}
+                  track={track}
+                  queue={allTracks}
+                  isCurrentTrack={isCurrentTrackFn(track)}
+                  isPlaying={status === "playing"}
+                />
+              ))}
+            </div>
+
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={loadMore}
+                disabled={isLoading}
+                className={`
+                  px-8 py-3 rounded-full font-bold text-sm tracking-wide transition-all
+                  bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:scale-105 active:scale-95
+                  ${isLoading ? "opacity-50 cursor-not-allowed" : ""}
+                `}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Loading...
+                  </span>
+                ) : (
+                  "Load More"
+                )}
+              </button>
+            </div>
+          </>
         )}
       </section>
     </div>

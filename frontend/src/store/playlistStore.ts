@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { playlistApi, AddTrackPayload } from '../lib/apiClient';
-import type { Playlist } from '../types';
+import { create } from "zustand";
+import { playlistApi, AddTrackPayload } from "../lib/apiClient";
+import type { Playlist } from "../types";
 
 interface PlaylistStore {
   // Dữ liệu
@@ -13,7 +13,11 @@ interface PlaylistStore {
 
   // Actions
   fetchMyPlaylists: () => Promise<void>;
-  createPlaylist: (data: { name: string; description?: string; isPublic?: boolean }) => Promise<Playlist>;
+  createPlaylist: (data: {
+    name: string;
+    description?: string;
+    isPublic?: boolean;
+  }) => Promise<Playlist>;
   deletePlaylist: (playlistId: string) => Promise<void>;
   addTrack: (playlistId: string, trackData: AddTrackPayload) => Promise<void>;
   removeTrack: (playlistId: string, trackId: string) => Promise<void>;
@@ -35,7 +39,8 @@ export const usePlaylistStore = create<PlaylistStore>((set, get) => ({
       const res = await playlistApi.getMy();
       set({ playlists: res.data as Playlist[], isLoading: false });
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Lấy danh sách playlist thất bại';
+      const msg =
+        err instanceof Error ? err.message : "Lấy danh sách playlist thất bại";
       set({ error: msg, isLoading: false });
     }
   },
@@ -58,7 +63,9 @@ export const usePlaylistStore = create<PlaylistStore>((set, get) => ({
     const res = await playlistApi.addTrack(playlistId, trackData);
     const updated = res.data as Playlist;
     set((state) => ({
-      playlists: state.playlists.map((p) => (p._id === playlistId ? updated : p)),
+      playlists: state.playlists.map((p) =>
+        p._id === playlistId ? updated : p,
+      ),
     }));
   },
 
@@ -66,7 +73,9 @@ export const usePlaylistStore = create<PlaylistStore>((set, get) => ({
     const res = await playlistApi.removeTrack(playlistId, trackId);
     const updated = res.data as Playlist;
     set((state) => ({
-      playlists: state.playlists.map((p) => (p._id === playlistId ? updated : p)),
+      playlists: state.playlists.map((p) =>
+        p._id === playlistId ? updated : p,
+      ),
     }));
   },
 

@@ -1,24 +1,30 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Popconfirm } from 'antd';
-import { usePlaylistStore } from '../store/playlistStore';
-import { usePlayerStore } from '../store/playerStore';
-import { playlistApi } from '../lib/apiClient';
-import type { Track, Playlist } from '../types';
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Popconfirm } from "antd";
+import { usePlaylistStore } from "../store/playlistStore";
+import { usePlayerStore } from "../store/playerStore";
+import { playlistApi } from "../lib/apiClient";
+import type { Track, Playlist } from "../types";
 
 /* ── Utils ── */
 function formatDuration(seconds: number | undefined | null): string {
-  const s = Math.floor((seconds ?? 0));
+  const s = Math.floor(seconds ?? 0);
   const m = Math.floor(s / 60);
   const rem = s % 60;
-  if (s <= 0) return '—';
-  return `${m}:${rem.toString().padStart(2, '0')}`;
+  if (s <= 0) return "—";
+  return `${m}:${rem.toString().padStart(2, "0")}`;
 }
 
 /* ── Icons ── */
 function IconArrowLeft() {
   return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
     </svg>
   );
@@ -39,14 +45,28 @@ function IconPause() {
 }
 function IconTrash() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+      />
     </svg>
   );
 }
 function IconMusic() {
   return (
-    <svg className="w-8 h-8 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+    <svg
+      className="w-8 h-8 text-white/40"
+      fill="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
     </svg>
   );
@@ -60,11 +80,17 @@ interface TrackRowProps {
   onPlay: () => void;
   onRemove: () => void;
 }
-function TrackRow({ track, index, isPlaying, onPlay, onRemove }: TrackRowProps) {
+function TrackRow({
+  track,
+  index,
+  isPlaying,
+  onPlay,
+  onRemove,
+}: TrackRowProps) {
   return (
     <div
       className={`group flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer ${
-        isPlaying ? 'bg-primary/10 border border-primary/20' : ''
+        isPlaying ? "bg-primary/10 border border-primary/20" : ""
       }`}
       onClick={onPlay}
     >
@@ -73,7 +99,9 @@ function TrackRow({ track, index, isPlaying, onPlay, onRemove }: TrackRowProps) 
         {isPlaying ? (
           <span className="text-primary text-xs font-bold">▶</span>
         ) : (
-          <span className="text-slate-500 text-sm font-medium group-hover:hidden">{index + 1}</span>
+          <span className="text-slate-500 text-sm font-medium group-hover:hidden">
+            {index + 1}
+          </span>
         )}
         {!isPlaying && (
           <span className="hidden group-hover:flex text-white">
@@ -85,7 +113,11 @@ function TrackRow({ track, index, isPlaying, onPlay, onRemove }: TrackRowProps) 
       {/* Thumbnail */}
       <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
         {track.thumbnail ? (
-          <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
+          <img
+            src={track.thumbnail}
+            alt={track.title}
+            className="w-full h-full object-cover"
+          />
         ) : (
           <IconMusic />
         )}
@@ -93,7 +125,9 @@ function TrackRow({ track, index, isPlaying, onPlay, onRemove }: TrackRowProps) 
 
       {/* Title + artist */}
       <div className="flex-1 min-w-0">
-        <p className={`font-semibold text-sm truncate ${isPlaying ? 'text-primary' : 'text-white'}`}>
+        <p
+          className={`font-semibold text-sm truncate ${isPlaying ? "text-primary" : "text-white"}`}
+        >
           {track.title}
         </p>
         <p className="text-xs text-slate-400 truncate">{track.artist}</p>
@@ -101,7 +135,7 @@ function TrackRow({ track, index, isPlaying, onPlay, onRemove }: TrackRowProps) 
 
       {/* Album */}
       <p className="hidden md:block text-sm text-slate-400 truncate max-w-[160px]">
-        {track.album ?? '—'}
+        {track.album ?? "—"}
       </p>
 
       {/* Duration */}
@@ -115,7 +149,10 @@ function TrackRow({ track, index, isPlaying, onPlay, onRemove }: TrackRowProps) 
         okText="Xoá"
         cancelText="Huỷ"
         okButtonProps={{ danger: true }}
-        onConfirm={(e) => { e?.stopPropagation(); onRemove(); }}
+        onConfirm={(e) => {
+          e?.stopPropagation();
+          onRemove();
+        }}
         onCancel={(e) => e?.stopPropagation()}
       >
         <button
@@ -140,15 +177,16 @@ export default function PlaylistDetailPage() {
   // Fetch playlist trực tiếp từ API để luôn có tracks đã populate
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
+  const [fetchError, setFetchError] = useState("");
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
-    setFetchError('');
-    playlistApi.getById(id)
+    setFetchError("");
+    playlistApi
+      .getById(id)
       .then((res) => setPlaylist(res.data as Playlist))
-      .catch(() => setFetchError('Không thể tải playlist.'))
+      .catch(() => setFetchError("Không thể tải playlist."))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -163,9 +201,11 @@ export default function PlaylistDetailPage() {
   if (fetchError || !playlist) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-slate-400">{fetchError || 'Playlist không tìm thấy.'}</p>
+        <p className="text-slate-400">
+          {fetchError || "Playlist không tìm thấy."}
+        </p>
         <button
-          onClick={() => navigate('/library')}
+          onClick={() => navigate("/library")}
           className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
         >
           <IconArrowLeft />
@@ -186,11 +226,12 @@ export default function PlaylistDetailPage() {
 
   function getCurrentTrackId(): string | null {
     if (!currentTrack) return null;
-    return '_id' in currentTrack ? (currentTrack as Track)._id : null;
+    return "_id" in currentTrack ? (currentTrack as Track)._id : null;
   }
 
   const playingTrackId = getCurrentTrackId();
-  const isThisPlaylistPlaying = status === 'playing' && tracks.some((t) => t._id === playingTrackId);
+  const isThisPlaylistPlaying =
+    status === "playing" && tracks.some((t) => t._id === playingTrackId);
 
   async function handleRemoveTrack(trackId: string) {
     await removeTrack(playlist!._id, trackId);
@@ -201,7 +242,9 @@ export default function PlaylistDetailPage() {
     } catch {
       // Nếu fetch lỗi, xoá track khỏi local state thủ công
       setPlaylist((prev) =>
-        prev ? { ...prev, tracks: prev.tracks.filter((t) => t._id !== trackId) } : prev
+        prev
+          ? { ...prev, tracks: prev.tracks.filter((t) => t._id !== trackId) }
+          : prev,
       );
     }
   }
@@ -222,10 +265,18 @@ export default function PlaylistDetailPage() {
         {/* Cover */}
         <div className="w-40 h-40 sm:w-52 sm:h-52 flex-shrink-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
           {playlist.thumbnail ? (
-            <img src={playlist.thumbnail} alt={playlist.name} className="w-full h-full object-cover" />
+            <img
+              src={playlist.thumbnail}
+              alt={playlist.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/70 to-amber-500/50 flex items-center justify-center">
-              <svg className="w-16 h-16 text-white/60" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-16 h-16 text-white/60"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
               </svg>
             </div>
@@ -235,17 +286,19 @@ export default function PlaylistDetailPage() {
         {/* Meta */}
         <div className="flex flex-col gap-2 min-w-0">
           <span className="text-xs font-bold uppercase tracking-widest text-primary">
-            {playlist.isPublic ? 'Playlist công khai' : 'Playlist riêng tư'}
+            {playlist.isPublic ? "Playlist công khai" : "Playlist riêng tư"}
           </span>
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
             {playlist.name}
           </h1>
           {playlist.description && (
-            <p className="text-sm text-slate-400 line-clamp-2">{playlist.description}</p>
+            <p className="text-sm text-slate-400 line-clamp-2">
+              {playlist.description}
+            </p>
           )}
           <p className="text-sm text-slate-400 mt-1">
-            <span className="font-semibold text-white">{tracks.length}</span> bài ·{' '}
-            {totalMin} phút
+            <span className="font-semibold text-white">{tracks.length}</span>{" "}
+            bài · {totalMin} phút
           </p>
 
           {/* Play all button */}
@@ -255,7 +308,7 @@ export default function PlaylistDetailPage() {
               className="mt-3 flex items-center gap-3 w-fit px-6 py-3 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm transition-all hover:scale-105 shadow-lg shadow-primary/30"
             >
               {isThisPlaylistPlaying ? <IconPause /> : <IconPlay />}
-              {isThisPlaylistPlaying ? 'Đang phát' : 'Phát tất cả'}
+              {isThisPlaylistPlaying ? "Đang phát" : "Phát tất cả"}
             </button>
           )}
         </div>
@@ -268,7 +321,9 @@ export default function PlaylistDetailPage() {
             <IconMusic />
           </div>
           <p className="text-base font-semibold">Playlist trống</p>
-          <p className="text-sm mt-1">Thêm bài hát vào playlist này từ trang tìm kiếm.</p>
+          <p className="text-sm mt-1">
+            Thêm bài hát vào playlist này từ trang tìm kiếm.
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-1">
@@ -287,7 +342,7 @@ export default function PlaylistDetailPage() {
               key={track._id}
               track={track}
               index={i}
-              isPlaying={status === 'playing' && playingTrackId === track._id}
+              isPlaying={status === "playing" && playingTrackId === track._id}
               onPlay={() => play(track, tracks)}
               onRemove={() => handleRemoveTrack(track._id)}
             />

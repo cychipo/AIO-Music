@@ -16,9 +16,9 @@ export interface Track {
   thumbnail: string;
   duration: number; // seconds
   sourceId: string;
-  source: 'youtube' | 'spotify' | 'soundcloud' | 'tiktok';
+  source: "youtube" | "spotify" | "soundcloud" | "tiktok";
   youtubeId?: string; // không bắt buộc — SoundCloud tracks không có youtubeId
-  url?: string;       // permalink URL để buildAudioStreamUrl() dùng fast-path
+  url?: string; // permalink URL để buildAudioStreamUrl() dùng fast-path
   playCount: number;
   tags: string[];
 }
@@ -29,7 +29,7 @@ export interface SearchResult {
   artist: string;
   thumbnail: string;
   duration: number;
-  source: 'youtube' | 'spotify' | 'soundcloud';
+  source: "youtube" | "spotify" | "soundcloud";
   youtubeId?: string;
   url?: string;
 }
@@ -45,7 +45,7 @@ export interface Playlist {
   createdAt: string;
 }
 
-export type PlayerStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+export type PlayerStatus = "idle" | "loading" | "playing" | "paused" | "error";
 
 export interface TrendingTrack {
   rank: number;
@@ -54,7 +54,7 @@ export interface TrendingTrack {
   artist: string;
   thumbnail: string;
   duration: number;
-  source: 'youtube' | 'spotify' | 'soundcloud';
+  source: "youtube" | "spotify" | "soundcloud";
   youtubeId?: string;
   previewUrl?: string;
   url: string;
@@ -74,11 +74,11 @@ export interface PlayerState {
   queue: (SearchResult | Track)[];
   queueIndex: number;
   status: PlayerStatus;
-  progress: number;    // 0-100
+  progress: number; // 0-100
   currentTime: number; // seconds
-  duration: number;    // seconds
-  volume: number;      // 0-1
+  duration: number; // seconds
+  volume: number; // 0-1
   isMuted: boolean;
   isShuffled: boolean;
-  repeatMode: 'none' | 'one' | 'all';
+  repeatMode: "none" | "one" | "all";
 }

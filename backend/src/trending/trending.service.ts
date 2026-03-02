@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { forkJoin, from, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
-import { YoutubeTrendingService } from './providers/youtube-trending.service';
-import { SpotifyTrendingService } from './providers/spotify-trending.service';
-import { SoundcloudTrendingService } from './providers/soundcloud-trending.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { forkJoin, from, of } from "rxjs";
+import { catchError } from "rxjs/operators";
+import { YoutubeTrendingService } from "./providers/youtube-trending.service";
+import { SpotifyTrendingService } from "./providers/spotify-trending.service";
+import { SoundcloudTrendingService } from "./providers/soundcloud-trending.service";
 
 export interface TrendingTrack {
   rank: number;
@@ -11,20 +11,20 @@ export interface TrendingTrack {
   title: string;
   artist: string;
   thumbnail: string;
-  duration: number;         // seconds
-  source: 'youtube' | 'spotify' | 'soundcloud';
-  youtubeId?: string;       // chỉ có với YouTube tracks
-  previewUrl?: string;      // chỉ có với Spotify tracks (30s preview)
-  url: string;              // link gốc đến platform
-  viewCount?: number;       // YouTube
-  playCount?: number;       // SoundCloud
+  duration: number; // seconds
+  source: "youtube" | "spotify" | "soundcloud";
+  youtubeId?: string; // chỉ có với YouTube tracks
+  previewUrl?: string; // chỉ có với Spotify tracks (30s preview)
+  url: string; // link gốc đến platform
+  viewCount?: number; // YouTube
+  playCount?: number; // SoundCloud
 }
 
 export interface TrendingResponse {
   youtube: TrendingTrack[];
   spotify: TrendingTrack[];
   soundcloud: TrendingTrack[];
-  fetchedAt: string;        // ISO timestamp để client biết khi nào data được lấy
+  fetchedAt: string; // ISO timestamp để client biết khi nào data được lấy
 }
 
 @Injectable()

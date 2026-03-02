@@ -38,7 +38,6 @@ declare namespace YT {
     videoId?: string;
     width?: number | string;
     height?: number | string;
-    host?: string;
     playerVars?: PlayerVars;
     events?: Events;
   }

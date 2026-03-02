@@ -1,4 +1,4 @@
-import { AuthProvider } from '../../common/schemas/user.schema';
+import { AuthProvider } from "../../common/schemas/user.schema";
 
 /**
  * Profile OAuth chuẩn hóa — được map từ Google / Facebook profile

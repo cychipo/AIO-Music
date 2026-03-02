@@ -13,7 +13,7 @@ export interface SearchResult {
   duration: number;
   source: "youtube" | "spotify" | "soundcloud";
   youtubeId?: string; // Resolved for Spotify tracks
-  url?: string;       // Permalink (SoundCloud, etc.)
+  url?: string; // Permalink (SoundCloud, etc.)
 }
 
 @Injectable()
@@ -68,6 +68,10 @@ export class SearchService {
 
   async searchSpotify(query: string, limit = 10): Promise<SearchResult[]> {
     return this.spotifySearch.search(query, limit);
+  }
+
+  async searchSoundcloud(query: string, limit = 10): Promise<SearchResult[]> {
+    return this.soundcloudSearch.search(query, limit);
   }
 
   /**

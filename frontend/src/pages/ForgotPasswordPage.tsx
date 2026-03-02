@@ -43,7 +43,8 @@ export default function ForgotPasswordPage() {
       navigate("/forgot-password/verify", { state: { email } });
     } catch (err: any) {
       setError(
-        err?.response?.data?.message || "Không thể gửi email. Vui lòng thử lại."
+        err?.response?.data?.message ||
+          "Không thể gửi email. Vui lòng thử lại.",
       );
     } finally {
       setIsLoading(false);
@@ -207,9 +208,25 @@ export default function ForgotPasswordPage() {
             >
               {isLoading ? (
                 <>
-                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  <svg
+                    className="w-5 h-5 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
                   </svg>
                   Đang gửi…
                 </>
@@ -217,8 +234,19 @@ export default function ForgotPasswordPage() {
                 <>
                   Send Reset Link
                   {/* arrow_forward */}
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
                   </svg>
                 </>
               )}
@@ -232,8 +260,19 @@ export default function ForgotPasswordPage() {
               className="inline-flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-medium py-2"
             >
               {/* arrow_back */}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
+                />
               </svg>
               Back to Login
             </Link>

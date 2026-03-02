@@ -2,19 +2,22 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
-} from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
-import { OAuth2Client } from 'google-auth-library';
-import { User, UserDocument } from '../common/schemas/user.schema';
-import { RefreshToken, RefreshTokenDocument } from '../common/schemas/refresh-token.schema';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { OAuthProfileDto } from './dto/oauth-profile.dto';
+} from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import * as bcrypt from "bcrypt";
+import * as crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
+import { User, UserDocument } from "../common/schemas/user.schema";
+import {
+  RefreshToken,
+  RefreshTokenDocument,
+} from "../common/schemas/refresh-token.schema";
+import { RegisterDto } from "./dto/register.dto";
+import { LoginDto } from "./dto/login.dto";
+import { OAuthProfileDto } from "./dto/oauth-profile.dto";
 
 export interface AuthTokens {
   accessToken: string;
@@ -22,7 +25,7 @@ export interface AuthTokens {
 }
 
 export interface AuthResponse {
-  user: Omit<UserDocument, 'password'>;
+  user: Omit<UserDocument, "password">;
   accessToken: string;
   refreshToken: string;
 }
@@ -31,7 +34,8 @@ export interface AuthResponse {
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @InjectModel(RefreshToken.name) private refreshTokenModel: Model<RefreshTokenDocument>,
+    @InjectModel(RefreshToken.name)
+    private refreshTokenModel: Model<RefreshTokenDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
   ) {}
@@ -44,7 +48,7 @@ export class AuthService {
     // Kiểm tra email đã tồn tại chưa — bất kể provider nào
     const existing = await this.userModel.findOne({ email });
     if (existing) {
-      throw new ConflictException('Email này đã được sử dụng');
+      throw new ConflictException("Email này đã được sử dụng");
     }
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -52,7 +56,7 @@ export class AuthService {
       email,
       password: hashedPassword,
       displayName: dto.displayName,
-      authProvider: 'local',
+      authProvider: "local",
     });
 
     const tokens = await this._issueTokens(user);
@@ -70,8 +74,9 @@ export class AuthService {
   // ── loginWithOneTap — verify Google id_token từ GSI One Tap ─────────────
 
   async loginWithOneTap(credential: string): Promise<AuthResponse> {
-    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
-    if (!clientId) throw new UnauthorizedException('Google Client ID chưa được cấu hình');
+    const clientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
+    if (!clientId)
+      throw new UnauthorizedException("Google Client ID chưa được cấu hình");
 
     const oauthClient = new OAuth2Client(clientId);
 
@@ -83,18 +88,22 @@ export class AuthService {
       });
       payload = ticket.getPayload();
     } catch {
-      throw new UnauthorizedException('Google credential không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException(
+        "Google credential không hợp lệ hoặc đã hết hạn",
+      );
     }
 
     if (!payload?.email) {
-      throw new UnauthorizedException('Không thể lấy email từ Google credential');
+      throw new UnauthorizedException(
+        "Không thể lấy email từ Google credential",
+      );
     }
 
     const profile: OAuthProfileDto = {
       email: payload.email,
       displayName: payload.name || payload.email,
       avatar: payload.picture,
-      provider: 'google',
+      provider: "google",
       providerId: payload.sub,
     };
 
@@ -124,16 +133,21 @@ export class AuthService {
     const normalizedEmail = email.toLowerCase();
 
     // 1. Tìm theo providerId trước (nhanh nhất, chính xác nhất)
-    let user = await this.userModel.findOne({ providerId, authProvider: provider });
+    let user = await this.userModel.findOne({
+      providerId,
+      authProvider: provider,
+    });
     if (user) {
-      if (!user.isActive) throw new UnauthorizedException('Tài khoản đã bị vô hiệu hoá');
+      if (!user.isActive)
+        throw new UnauthorizedException("Tài khoản đã bị vô hiệu hoá");
       return user;
     }
 
     // 2. Tìm theo email
     user = await this.userModel.findOne({ email: normalizedEmail });
     if (user) {
-      if (!user.isActive) throw new UnauthorizedException('Tài khoản đã bị vô hiệu hoá');
+      if (!user.isActive)
+        throw new UnauthorizedException("Tài khoản đã bị vô hiệu hoá");
 
       // Gắn providerId nếu chưa có (ví dụ: user đăng ký local rồi sau đó dùng Google
       // với cùng email → liên kết ngầm)
@@ -151,7 +165,7 @@ export class AuthService {
       email: normalizedEmail,
       password: null,
       displayName,
-      avatar: avatar ?? '',
+      avatar: avatar ?? "",
       authProvider: provider,
       providerId,
     });
@@ -162,10 +176,14 @@ export class AuthService {
   // ── refresh ───────────────────────────────────────────────────────────────
 
   async refresh(rawRefreshToken: string): Promise<AuthTokens> {
-    const stored = await this.refreshTokenModel.findOne({ token: rawRefreshToken });
+    const stored = await this.refreshTokenModel.findOne({
+      token: rawRefreshToken,
+    });
 
     if (!stored || stored.revoked || stored.expiresAt < new Date()) {
-      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+      throw new UnauthorizedException(
+        "Refresh token không hợp lệ hoặc đã hết hạn",
+      );
     }
 
     // Rotation — revoke token cũ ngay lập tức
@@ -173,7 +191,8 @@ export class AuthService {
     await stored.save();
 
     const user = await this.userModel.findById(stored.userId);
-    if (!user || !user.isActive) throw new UnauthorizedException('Tài khoản không hợp lệ');
+    if (!user || !user.isActive)
+      throw new UnauthorizedException("Tài khoản không hợp lệ");
 
     return this._issueTokens(user);
   }
@@ -191,7 +210,8 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<UserDocument> {
     const user = await this.userModel.findOne({ email: email.toLowerCase() });
-    if (!user) throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+    if (!user)
+      throw new UnauthorizedException("Email hoặc mật khẩu không đúng");
 
     // OAuth user không có password — không thể đăng nhập bằng email/password
     if (!user.password) {
@@ -201,9 +221,11 @@ export class AuthService {
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
+    if (!isMatch)
+      throw new UnauthorizedException("Email hoặc mật khẩu không đúng");
 
-    if (!user.isActive) throw new UnauthorizedException('Tài khoản đã bị vô hiệu hoá');
+    if (!user.isActive)
+      throw new UnauthorizedException("Tài khoản đã bị vô hiệu hoá");
 
     return user;
   }
@@ -229,7 +251,7 @@ export class AuthService {
     const accessToken = this.generateAccessToken(user);
 
     // Refresh token — opaque random string, 30 ngày TTL
-    const rawToken = crypto.randomBytes(40).toString('hex');
+    const rawToken = crypto.randomBytes(40).toString("hex");
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 

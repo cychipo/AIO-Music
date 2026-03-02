@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { User } from '../types';
-import { authApi, userApi } from '../lib/apiClient';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { User } from "../types";
+import { authApi, userApi } from "../lib/apiClient";
 
 interface AuthState {
   user: User | null;
@@ -11,7 +11,11 @@ interface AuthState {
   isLoading: boolean;
 
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    displayName: string,
+  ) => Promise<void>;
   loginWithOAuth: (accessToken: string, refreshToken: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -32,9 +36,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           const res = await authApi.login(email, password);
           const { user, accessToken, refreshToken } = res.data;
-          localStorage.setItem('aio_token', accessToken);
-          localStorage.setItem('aio_refresh_token', refreshToken);
-          set({ user, token: accessToken, refreshToken, isAuthenticated: true });
+          localStorage.setItem("aio_token", accessToken);
+          localStorage.setItem("aio_refresh_token", refreshToken);
+          set({
+            user,
+            token: accessToken,
+            refreshToken,
+            isAuthenticated: true,
+          });
         } finally {
           set({ isLoading: false });
         }
@@ -45,9 +54,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           const res = await authApi.register(email, password, displayName);
           const { user, accessToken, refreshToken } = res.data;
-          localStorage.setItem('aio_token', accessToken);
-          localStorage.setItem('aio_refresh_token', refreshToken);
-          set({ user, token: accessToken, refreshToken, isAuthenticated: true });
+          localStorage.setItem("aio_token", accessToken);
+          localStorage.setItem("aio_refresh_token", refreshToken);
+          set({
+            user,
+            token: accessToken,
+            refreshToken,
+            isAuthenticated: true,
+          });
         } finally {
           set({ isLoading: false });
         }
@@ -55,8 +69,8 @@ export const useAuthStore = create<AuthState>()(
 
       // Lưu token từ OAuth callback (Google / Facebook)
       loginWithOAuth: async (accessToken, refreshToken) => {
-        localStorage.setItem('aio_token', accessToken);
-        localStorage.setItem('aio_refresh_token', refreshToken);
+        localStorage.setItem("aio_token", accessToken);
+        localStorage.setItem("aio_refresh_token", refreshToken);
         set({ token: accessToken, refreshToken, isAuthenticated: true });
         // Lấy thông tin user từ server
         try {
@@ -76,19 +90,24 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Bỏ qua lỗi khi logout — xoá token local dù sao
         } finally {
-          localStorage.removeItem('aio_token');
-          localStorage.removeItem('aio_refresh_token');
-          set({ user: null, token: null, refreshToken: null, isAuthenticated: false });
+          localStorage.removeItem("aio_token");
+          localStorage.removeItem("aio_refresh_token");
+          set({
+            user: null,
+            token: null,
+            refreshToken: null,
+            isAuthenticated: false,
+          });
         }
       },
 
       refresh: async () => {
         const { refreshToken } = get();
-        if (!refreshToken) throw new Error('Không có refresh token');
+        if (!refreshToken) throw new Error("Không có refresh token");
         const res = await authApi.refresh(refreshToken);
         const { accessToken, refreshToken: newRefreshToken } = res.data;
-        localStorage.setItem('aio_token', accessToken);
-        localStorage.setItem('aio_refresh_token', newRefreshToken);
+        localStorage.setItem("aio_token", accessToken);
+        localStorage.setItem("aio_refresh_token", newRefreshToken);
         set({ token: accessToken, refreshToken: newRefreshToken });
       },
 
@@ -102,7 +121,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'aio-auth',
+      name: "aio-auth",
       partialize: (state) => ({
         token: state.token,
         refreshToken: state.refreshToken,

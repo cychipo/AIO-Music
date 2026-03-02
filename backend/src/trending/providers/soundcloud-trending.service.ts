@@ -32,29 +32,58 @@ export class SoundcloudTrendingService implements OnModuleInit {
     }
   }
 
+  private cache: {
+    tracks: TrendingTrack[];
+    fetchedAt: number;
+  } | null = null;
+  private readonly CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
   async getTrending(limit = 10): Promise<TrendingTrack[]> {
-    this.logger.log(`[SoundCloud] Fetching top ${limit} trending via play-dl`);
+    // Return from cache if valid and has enough tracks (or bounded by max)
+    if (
+      this.cache &&
+      Date.now() - this.cache.fetchedAt < this.CACHE_TTL &&
+      this.cache.tracks.length >= Math.min(limit, 50)
+    ) {
+      return this.cache.tracks.slice(0, limit);
+    }
+
+    this.logger.log(`[SoundCloud] Fetching top trending via play-dl`);
 
     try {
-      const results = await play.search("trending music 2025", {
+      const results = await play.search("nhac tre viet nam", {
         source: { soundcloud: "tracks" },
-        limit: limit * 3, // fetch extra to filter long mixes out
+        limit: Math.max(limit * 3, 50), // fetch enough to cache
       });
 
-      return this._mapResults(results, limit);
-    } catch (err) {
+      const tracks = this._mapResults(results, Math.max(limit, 50));
+      if (tracks.length > 0) {
+        this.cache = {
+          tracks,
+          fetchedAt: Date.now(),
+        };
+      }
+      return tracks.slice(0, limit);
+    } catch (err: any) {
       // client_id có thể đã hết hạn — thử refresh rồi retry 1 lần
       this.logger.warn(
         `[SoundCloud] Search failed, refreshing client_id: ${err.message}`,
       );
       await this._refreshClientId();
 
-      const results = await play.search("trending music 2025", {
+      const results = await play.search("nhac tre viet nam", {
         source: { soundcloud: "tracks" },
-        limit: limit * 3,
+        limit: Math.max(limit * 3, 50),
       });
 
-      return this._mapResults(results, limit);
+      const tracks = this._mapResults(results, Math.max(limit, 50));
+      if (tracks.length > 0) {
+        this.cache = {
+          tracks,
+          fetchedAt: Date.now(),
+        };
+      }
+      return tracks.slice(0, limit);
     }
   }
 

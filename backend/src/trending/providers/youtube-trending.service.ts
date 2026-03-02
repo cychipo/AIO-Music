@@ -14,13 +14,13 @@ export class YoutubeTrendingService implements OnModuleInit {
   private readonly logger = new Logger(YoutubeTrendingService.name);
   private yt: Innertube;
 
-  /** Các query xoay vòng để trending đa dạng hơn */
+  /** Các query xoay vòng để trending đa dạng hơn (Việt Nam) */
   private readonly TRENDING_QUERIES = [
-    "trending music video 2025",
-    "new music video 2025 official",
-    "vpop music video 2025",
-    "best pop songs 2025",
-    "kpop official music video",
+    "Top 100 Songs Vietnam",
+    "Best Vietnamese Songs 2026",
+    "Top Vietnamese Music 2026",
+    "Vpop 2026",
+    "Nhạc trẻ hay nhất hiện nay",
   ];
 
   private queryIndex = 0;
@@ -30,7 +30,23 @@ export class YoutubeTrendingService implements OnModuleInit {
     this.logger.log("[YouTube Trending] InnerTube client đã khởi tạo");
   }
 
+  private cache: {
+    tracks: TrendingTrack[];
+    fetchedAt: number;
+    queryIndex: number;
+  } | null = null;
+  private readonly CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
   async getTrending(limit = 10, _regionCode = "VN"): Promise<TrendingTrack[]> {
+    // Return from cache if valid and has enough tracks (or bounded by max)
+    if (
+      this.cache &&
+      Date.now() - this.cache.fetchedAt < this.CACHE_TTL &&
+      this.cache.tracks.length >= Math.min(limit, 50)
+    ) {
+      return this.cache.tracks.slice(0, limit);
+    }
+
     const maxAttempts = this.TRENDING_QUERIES.length;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -40,7 +56,7 @@ export class YoutubeTrendingService implements OnModuleInit {
         ];
 
       this.logger.log(
-        `[YouTube] Fetching top ${limit} trending (query: "${query}", attempt ${attempt + 1}/${maxAttempts})`,
+        `[YouTube] Fetching top trending (query: "${query}", attempt ${attempt + 1}/${maxAttempts})`,
       );
 
       try {
@@ -51,9 +67,6 @@ export class YoutubeTrendingService implements OnModuleInit {
           !results.contents[0] ||
           !results.contents[0].contents
         ) {
-          this.logger.warn(
-            `[YouTube] Không tìm thấy playlist cho query: "${query}"`,
-          );
           continue;
         }
 
@@ -62,9 +75,7 @@ export class YoutubeTrendingService implements OnModuleInit {
           continue;
         }
 
-        this.logger.log(
-          `[YouTube] Found playlist: ${firstPlaylist.title} (${firstPlaylist.id})`,
-        );
+        this.logger.log(`[YouTube] Found playlist: ${firstPlaylist.id}`);
 
         const playlistDetails = await this.yt.music.getPlaylist(
           firstPlaylist.id,
@@ -79,7 +90,6 @@ export class YoutubeTrendingService implements OnModuleInit {
             const dur = item.duration?.seconds ?? 0;
             return dur > 0 && dur <= 600; // max 10 phút
           })
-          .slice(0, limit)
           .map((item: any, index: number): TrendingTrack => {
             return {
               rank: index + 1,
@@ -106,12 +116,15 @@ export class YoutubeTrendingService implements OnModuleInit {
         if (tracks.length > 0) {
           this.queryIndex =
             (this.queryIndex + attempt + 1) % this.TRENDING_QUERIES.length;
-          return tracks;
-        }
 
-        this.logger.warn(
-          `[YouTube] Playlist "${firstPlaylist.title}" trả về 0 track hợp lệ, thử query tiếp theo`,
-        );
+          this.cache = {
+            tracks,
+            fetchedAt: Date.now(),
+            queryIndex: this.queryIndex,
+          };
+
+          return tracks.slice(0, limit);
+        }
       } catch (error: any) {
         this.logger.error(
           `[YouTube] Lỗi khi xử lý query "${query}": ${error.message}`,
