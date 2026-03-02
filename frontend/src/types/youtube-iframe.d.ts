@@ -4,6 +4,15 @@
 declare namespace YT {
   type PlayerState = -1 | 0 | 1 | 2 | 3 | 5;
 
+  type SuggestedQuality =
+    | "small"
+    | "medium"
+    | "large"
+    | "hd720"
+    | "hd1080"
+    | "highres"
+    | "default";
+
   const PlayerState: {
     UNSTARTED: -1;
     ENDED: 0;
@@ -61,8 +70,28 @@ declare namespace YT {
       elementIdOrElement: string | HTMLElement,
       options: PlayerOptions,
     );
-    loadVideoById(videoId: string, startSeconds?: number): void;
-    cueVideoById(videoId: string, startSeconds?: number): void;
+    loadVideoById(
+      videoId: string,
+      startSeconds?: number,
+      suggestedQuality?: SuggestedQuality,
+    ): void;
+    loadVideoById(options: {
+      videoId: string;
+      startSeconds?: number;
+      endSeconds?: number;
+      suggestedQuality?: SuggestedQuality;
+    }): void;
+    cueVideoById(
+      videoId: string,
+      startSeconds?: number,
+      suggestedQuality?: SuggestedQuality,
+    ): void;
+    cueVideoById(options: {
+      videoId: string;
+      startSeconds?: number;
+      endSeconds?: number;
+      suggestedQuality?: SuggestedQuality;
+    }): void;
     playVideo(): void;
     pauseVideo(): void;
     stopVideo(): void;
@@ -77,6 +106,12 @@ declare namespace YT {
     isMuted(): boolean;
     destroy(): void;
     getIframe(): HTMLIFrameElement;
+    setPlaybackQuality(quality: SuggestedQuality): void;
+    getPlaybackQuality(): SuggestedQuality;
+    getAvailableQualityLevels(): SuggestedQuality[];
+    setPlaybackRate(rate: number): void;
+    getPlaybackRate(): number;
+    getAvailablePlaybackRates(): number[];
   }
 }
 

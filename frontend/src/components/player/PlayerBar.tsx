@@ -34,6 +34,22 @@ function YouTubeEngine() {
   useEffect(() => {
     let destroyed = false;
 
+    /**
+     * Ép player về chất lượng thấp nhất và tốc độ bình thường.
+     * "small" = 240p (mức thấp nhất YouTube IFrame API hỗ trợ).
+     * Vì chỉ cần audio, không cần decode video chất lượng cao.
+     */
+    function enforceLowestQuality(player: YT.Player) {
+      try {
+        player.setPlaybackQuality("small");
+        if (player.getPlaybackRate() !== 1) {
+          player.setPlaybackRate(1);
+        }
+      } catch (_) {
+        /* player chưa sẵn sàng */
+      }
+    }
+
     function createPlayer() {
       if (destroyed) return;
       if (playerRef.current) return; // already created
@@ -56,12 +72,10 @@ function YouTubeEngine() {
         events: {
           onReady: () => {
             if (destroyed) return;
-            // Set YouTube volume về 100% — loudness được cân bằng
-            // ở phía SoundCloud/Spotify bằng GainNode trong playerStore
-            playerRef.current!.setVolume(
-              isMuted ? 0 : Math.round(volume * 100),
-            );
-            initYouTubePlayer(playerRef.current!);
+            const p = playerRef.current!;
+            p.setVolume(isMuted ? 0 : Math.round(volume * 100));
+            enforceLowestQuality(p);
+            initYouTubePlayer(p);
           },
           onStateChange: (e) => {
             if (destroyed) return;
@@ -70,11 +84,36 @@ function YouTubeEngine() {
               case YTState.PLAYING:
                 setStatus("playing");
                 _startYTPoll();
+                // Ép lại quality mỗi khi chuyển sang PLAYING
+                // (YouTube có thể tự nâng quality sau khi buffer)
+                enforceLowestQuality(e.target);
                 break;
-              case YTState.PAUSED:
-                setStatus("paused");
-                _stopYTPoll();
+
+              case YTState.PAUSED: {
+                // Phân biệt user pause vs YouTube "Are you still watching?"
+                // Khi user bấm pause → store.status đã set thành "paused"
+                // Khi YouTube auto-pause → store.status vẫn là "playing"
+                const storeStatus = usePlayerStore.getState().status;
+                if (storeStatus === "playing") {
+                  // YouTube idle detection → auto-resume sau delay ngắn
+                  console.log(
+                    "[YT] Detected YouTube idle pause — auto-resuming",
+                  );
+                  setTimeout(() => {
+                    if (destroyed) return;
+                    try {
+                      e.target.playVideo();
+                    } catch (_) {
+                      /* player destroyed */
+                    }
+                  }, 500);
+                } else {
+                  setStatus("paused");
+                  _stopYTPoll();
+                }
                 break;
+              }
+
               case YTState.BUFFERING:
                 setStatus("loading");
                 break;

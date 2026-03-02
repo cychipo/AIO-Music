@@ -212,7 +212,17 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       }
       // IFrame API max = 100, không boost thêm được
       ytPlayer.setVolume(isMuted ? 0 : 100);
-      ytPlayer.loadVideoById(ytId);
+      ytPlayer.loadVideoById({
+        videoId: ytId,
+        suggestedQuality: "small",
+      });
+      // Ép quality thấp nhất và tốc độ bình thường cho audio-only playback
+      try {
+        ytPlayer.setPlaybackQuality("small");
+        ytPlayer.setPlaybackRate(1);
+      } catch (_) {
+        /* player chưa sẵn sàng */
+      }
     } else {
       // ── SoundCloud / Spotify: HTML5 Audio + GainNode ───────
       const streamUrl = buildAudioStreamUrl(track);
