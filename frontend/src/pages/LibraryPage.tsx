@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Popconfirm } from "antd";
+import { Popconfirm, Dropdown, message } from "antd";
+import type { MenuProps } from "antd";
 import { usePlaylistStore } from "../store/playlistStore";
+import EditPlaylistModal from "../components/EditPlaylistModal";
 import type { Playlist } from "../types";
 
 /* ── Icons ── */
@@ -66,6 +68,40 @@ function IconClose() {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M6 18L18 6M6 6l12 12"
+      />
+    </svg>
+  );
+}
+function IconMore() {
+  return (
+    <svg
+      className="w-5 h-5 flex-shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+      />
+    </svg>
+  );
+}
+function IconEdit() {
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
       />
     </svg>
   );
@@ -192,10 +228,51 @@ function CreatePlaylistModal({ onClose, onCreate }: CreateModalProps) {
 /* ── Playlist Card ── */
 interface PlaylistCardProps {
   playlist: Playlist;
+  onEdit: (playlist: Playlist) => void;
   onDelete: (id: string) => void;
 }
-function PlaylistCard({ playlist, onDelete }: PlaylistCardProps) {
+function PlaylistCard({ playlist, onEdit, onDelete }: PlaylistCardProps) {
   const navigate = useNavigate();
+
+  const items: MenuProps["items"] = [
+    {
+      key: "edit",
+      label: (
+        <span className="flex items-center gap-2 text-sm text-slate-200 py-1">
+          <IconEdit /> Chỉnh sửa
+        </span>
+      ),
+      onClick: ({ domEvent }) => {
+        domEvent.stopPropagation();
+        onEdit(playlist);
+      },
+    },
+    {
+      key: "delete",
+      danger: true,
+      label: (
+        <Popconfirm
+          title="Xoá playlist"
+          description={`Bạn có chắc muốn xoá "${playlist.name}"?`}
+          onConfirm={(e) => {
+            e?.stopPropagation();
+            onDelete(playlist._id);
+          }}
+          onCancel={(e) => e?.stopPropagation()}
+          okText="Xoá"
+          cancelText="Huỷ"
+          okButtonProps={{ danger: true }}
+        >
+          <span className="flex items-center gap-2 text-sm py-1">
+            <IconTrash /> Xóa playlist
+          </span>
+        </Popconfirm>
+      ),
+      onClick: ({ domEvent }) => {
+        domEvent.stopPropagation();
+      },
+    },
+  ];
 
   return (
     <div
@@ -215,10 +292,10 @@ function PlaylistCard({ playlist, onDelete }: PlaylistCardProps) {
             <IconMusic />
           </div>
         )}
-        {/* Play button on hover */}
+        {/* Play button on hover (centered) */}
         <button
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-3 right-3 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-xl opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all hover:scale-110 hover:bg-primary/90"
+          className="absolute inset-0 m-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white shadow-xl opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:bg-primary/90"
           aria-label={`Phát ${playlist.name}`}
         >
           <IconPlay />
@@ -232,27 +309,16 @@ function PlaylistCard({ playlist, onDelete }: PlaylistCardProps) {
         {playlist.isPublic ? "Công khai" : "Riêng tư"}
       </p>
 
-      {/* Delete button — dùng Popconfirm của antd */}
-      <Popconfirm
-        title="Xoá playlist"
-        description={`Bạn có chắc muốn xoá "${playlist.name}"?`}
-        onConfirm={(e) => {
-          e?.stopPropagation();
-          onDelete(playlist._id);
-        }}
-        onCancel={(e) => e?.stopPropagation()}
-        okText="Xoá"
-        cancelText="Huỷ"
-        okButtonProps={{ danger: true }}
-      >
+      {/* More menu */}
+      <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
         <button
           onClick={(e) => e.stopPropagation()}
-          title="Xoá playlist"
-          className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 bg-black/40 text-slate-300 hover:bg-red-500/80 hover:text-white"
+          title="Tùy chọn"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 bg-black/40 text-slate-300 hover:bg-black/60 hover:text-white"
         >
-          <IconTrash />
+          <IconMore />
         </button>
-      </Popconfirm>
+      </Dropdown>
     </div>
   );
 }
@@ -278,7 +344,9 @@ export default function LibraryPage() {
   } = usePlaylistStore();
   const [activeTab, setActiveTab] = useState<Tab>("playlists");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [deleteError, setDeleteError] = useState("");
+  const { updatePlaylist } = usePlaylistStore();
 
   useEffect(() => {
     fetchMyPlaylists();
@@ -302,6 +370,17 @@ export default function LibraryPage() {
     } catch {
       setDeleteError("Xoá playlist thất bại. Vui lòng thử lại.");
       setTimeout(() => setDeleteError(""), 3000);
+    }
+  }
+
+  async function handleEditSubmit(values: any) {
+    if (!editingPlaylist) return;
+    try {
+      await updatePlaylist(editingPlaylist._id, values);
+      message.success("Cập nhật playlist thành công!");
+      setEditingPlaylist(null);
+    } catch (err) {
+      // message is handled in the modal, but just in case
     }
   }
 
@@ -434,6 +513,7 @@ export default function LibraryPage() {
                 <PlaylistCard
                   key={playlist._id}
                   playlist={playlist}
+                  onEdit={setEditingPlaylist}
                   onDelete={handleDelete}
                 />
               ))}
@@ -462,6 +542,16 @@ export default function LibraryPage() {
         <CreatePlaylistModal
           onClose={() => setShowCreateModal(false)}
           onCreate={handleCreate}
+        />
+      )}
+
+      {/* ── Edit Modal ── */}
+      {editingPlaylist && (
+        <EditPlaylistModal
+          visible={!!editingPlaylist}
+          onClose={() => setEditingPlaylist(null)}
+          playlist={editingPlaylist}
+          onSubmit={handleEditSubmit}
         />
       )}
     </div>

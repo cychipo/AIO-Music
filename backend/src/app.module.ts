@@ -9,6 +9,7 @@ import { PlaylistsModule } from "./playlists/playlists.module";
 import { StreamModule } from "./stream/stream.module";
 import { SearchModule } from "./search/search.module";
 import { TrendingModule } from "./trending/trending.module";
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { TrendingModule } from "./trending/trending.module";
     StreamModule,
     SearchModule,
     TrendingModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

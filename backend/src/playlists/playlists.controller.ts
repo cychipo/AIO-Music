@@ -45,6 +45,16 @@ export class PlaylistsController {
     return this.playlistsService.create(String(user._id), body);
   }
 
+  @Patch(":id")
+  @ApiOperation({ summary: "Cập nhật playlist" })
+  update(
+    @CurrentUser() user: UserDocument,
+    @Param("id") id: string,
+    @Body() body: any,
+  ) {
+    return this.playlistsService.update(String(user._id), id, body);
+  }
+
   /**
    * Thêm bài hát vào playlist.
    * Body phải chứa đầy đủ thông tin track (title, artist, sourceId, source, ...).

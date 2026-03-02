@@ -71,6 +71,18 @@ export class PlaylistsService {
     });
   }
 
+  async update(
+    userId: string,
+    playlistId: string,
+    data: Partial<Playlist>,
+  ): Promise<PlaylistDocument> {
+    await this.findOwned(userId, playlistId);
+
+    return this.playlistModel
+      .findByIdAndUpdate(playlistId, { $set: data }, { new: true })
+      .populate("tracks");
+  }
+
   /**
    * Thêm bài hát vào playlist.
    * trackData chứa thông tin đầy đủ của bài hát từ search result.

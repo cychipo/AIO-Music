@@ -18,6 +18,15 @@ interface PlaylistStore {
     description?: string;
     isPublic?: boolean;
   }) => Promise<Playlist>;
+  updatePlaylist: (
+    playlistId: string,
+    data: {
+      name?: string;
+      description?: string;
+      isPublic?: boolean;
+      thumbnail?: string;
+    },
+  ) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<void>;
   addTrack: (playlistId: string, trackData: AddTrackPayload) => Promise<void>;
   removeTrack: (playlistId: string, trackId: string) => Promise<void>;
@@ -50,6 +59,16 @@ export const usePlaylistStore = create<PlaylistStore>((set, get) => ({
     const newPlaylist = res.data as Playlist;
     set((state) => ({ playlists: [newPlaylist, ...state.playlists] }));
     return newPlaylist;
+  },
+
+  updatePlaylist: async (playlistId, data) => {
+    const res = await playlistApi.update(playlistId, data);
+    const updated = res.data as Playlist;
+    set((state) => ({
+      playlists: state.playlists.map((p) =>
+        p._id === playlistId ? updated : p,
+      ),
+    }));
   },
 
   deletePlaylist: async (playlistId) => {
