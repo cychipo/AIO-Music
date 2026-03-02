@@ -24,10 +24,16 @@ export class YoutubeSearchService implements OnModuleInit {
     this.logger.log(`[YouTube] Searching "${query}" (limit: ${limit})`);
 
     try {
-      const results = await this.yt.search(query, { type: "video" });
-      // results.videos trả về union type rộng, nhưng khi filter type='video'
-      // thực tế luôn là Video — cast sang any để tránh TS union errors
-      const videos = (results.videos as any[]).slice(0, limit);
+      let results = await this.yt.search(query, { type: "video" });
+      let videos = results.videos as any[];
+
+      // Fetch continuations until we satisfy the requested limit (or run out of results)
+      while (videos.length < limit && results.has_continuation) {
+        results = await results.getContinuation();
+        videos = videos.concat((results.videos as any[]) || []);
+      }
+
+      videos = videos.slice(0, limit);
 
       return videos.map((video: any) => ({
         id: video.id ?? "",

@@ -70,13 +70,19 @@ export class SpotifySearchService implements OnModuleInit {
       `[Spotify] Searching tracks (query: "${query}") via youtube proxy with limit ${limit}`,
     );
     try {
-      const results = await this.yt.music.search(`${query} audio`, {
+      let results: any = await this.yt.music.search(`${query} audio`, {
         type: "song",
       });
 
       if (!results.contents) return [];
 
-      const list = (results.contents[0] as any)?.contents || results.contents;
+      let list = (results.contents[0] as any)?.contents || results.contents;
+
+      while (list.length < limit && results.has_continuation) {
+        results = await results.getContinuation();
+        list = list.concat(results.contents || []);
+      }
+
       const tracks = (list as any[])
         .filter((item: any) => {
           const dur = item.duration?.seconds ?? 0;
