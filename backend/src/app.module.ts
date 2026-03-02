@@ -1,25 +1,25 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { TracksModule } from './tracks/tracks.module';
-import { PlaylistsModule } from './playlists/playlists.module';
-import { StreamModule } from './stream/stream.module';
-import { SearchModule } from './search/search.module';
-import { TrendingModule } from './trending/trending.module';
+import { Module } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { MongooseModule } from "@nestjs/mongoose";
+import { ThrottlerModule } from "@nestjs/throttler";
+import { AuthModule } from "./auth/auth.module";
+import { UsersModule } from "./users/users.module";
+import { TracksModule } from "./tracks/tracks.module";
+import { PlaylistsModule } from "./playlists/playlists.module";
+import { StreamModule } from "./stream/stream.module";
+import { SearchModule } from "./search/search.module";
+import { TrendingModule } from "./trending/trending.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ".env",
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'),
+        uri: configService.get<string>("MONGODB_URI"),
       }),
       inject: [ConfigService],
     }),

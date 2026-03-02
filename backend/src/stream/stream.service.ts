@@ -6,16 +6,6 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Response } from "express";
-import {
-  existsSync,
-  mkdirSync,
-  createReadStream,
-  createWriteStream,
-  renameSync,
-  unlinkSync,
-} from "fs";
-import { join } from "path";
-import { createHash } from "crypto";
 import * as play from "play-dl";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
@@ -25,18 +15,10 @@ export type StreamPlatform = "youtube" | "spotify" | "soundcloud";
 @Injectable()
 export class StreamService {
   private readonly logger = new Logger(StreamService.name);
-  private readonly cacheDir: string;
 
   constructor(private readonly config: ConfigService) {
     ffmpeg.setFfmpegPath(ffmpegInstaller.path);
-
-    this.cacheDir = join(process.cwd(), "cache", "audio");
-    if (!existsSync(this.cacheDir)) {
-      mkdirSync(this.cacheDir, { recursive: true });
-    }
-
     this.logger.log(`[Stream] ffmpeg: ${ffmpegInstaller.path}`);
-    this.logger.log(`[Stream] Audio Cache Dir: ${this.cacheDir}`);
   }
 
   detectPlatform(url: string): StreamPlatform {
@@ -100,7 +82,7 @@ export class StreamService {
   }
 
   // ---------------------------------------------------------------------------
-  // SOUNDCLOUD — play-dl → FFmpeg → client + disk cache
+  // SOUNDCLOUD — play-dl → FFmpeg → client (không cache)
   // ---------------------------------------------------------------------------
 
   async streamSoundCloud(soundcloudUrl: string, res: Response): Promise<void> {
@@ -109,31 +91,18 @@ export class StreamService {
       ? soundcloudUrl
       : `https://api.soundcloud.com/tracks/${soundcloudUrl}`;
 
-    // Dùng SHA-256 để tránh collision của base64 bị cắt ngắn
-    const cacheKey = `sc_${createHash("sha256").update(resolvedUrl).digest("hex").substring(0, 16)}`;
-    const cacheFile = join(this.cacheDir, `${cacheKey}.mp3`);
-
-    if (existsSync(cacheFile)) {
-      this.logger.log(`[SoundCloud] Cache hit: ${cacheFile}`);
-      res.setHeader("Content-Type", "audio/mpeg");
-      res.setHeader("Transfer-Encoding", "chunked");
-      res.setHeader("Accept-Ranges", "none");
-      res.setHeader("Cache-Control", "public, max-age=31536000");
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      createReadStream(cacheFile).pipe(res);
-      return;
-    }
-
-    this.logger.log(`[SoundCloud] Stream + encode: ${resolvedUrl}`);
+    this.logger.log(`[SoundCloud] Stream: ${resolvedUrl}`);
 
     try {
       const source = await play.stream(resolvedUrl);
-      this._streamAndCache(
+      this._streamToClient(
         source.stream as NodeJS.ReadableStream,
-        cacheKey,
+        "sc",
         res,
         source.type,
-        () => { (source.stream as any).destroy?.(); },
+        () => {
+          (source.stream as any).destroy?.();
+        },
       );
     } catch (err) {
       this.logger.error(`[SoundCloud] Lỗi: ${err.message}`);
@@ -146,19 +115,16 @@ export class StreamService {
   }
 
   // ---------------------------------------------------------------------------
-  // FFmpeg: convert → pipe to client + cache to disk simultaneously
+  // FFmpeg: convert → pipe thẳng về client (không ghi disk)
   // ---------------------------------------------------------------------------
 
-  private _streamAndCache(
+  private _streamToClient(
     inputStream: NodeJS.ReadableStream,
-    cacheKey: string,
+    sourceKey: string,
     res: Response,
     inputTypeStr?: string,
     killInputFn?: () => void,
   ): void {
-    const tempFile = join(this.cacheDir, `${cacheKey}.tmp`);
-    const cacheFile = join(this.cacheDir, `${cacheKey}.mp3`);
-
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Transfer-Encoding", "chunked");
     res.setHeader("Accept-Ranges", "none");
@@ -174,49 +140,31 @@ export class StreamService {
       command = command.inputFormat(inputTypeStr);
     }
 
-    command = command
-      .format("mp3")
-      .audioBitrate("128k")
-      .on("error", (err) => {
-        if (
-          !err.message.includes("Output stream closed") &&
-          !err.message.includes("SIGKILL")
-        ) {
-          this.logger.error(`[FFmpeg] ${cacheKey}: ${err.message}`);
-        }
-      });
+    command = command.format("mp3").audioBitrate("128k");
 
-    const ffStream = command.pipe();
+    // YouTube thường có âm lượng chuẩn thấp hơn SoundCloud — tăng 2.5x để cân bằng
+    if (sourceKey === "yt") {
+      command = command.audioFilters("volume=2.5");
+    }
 
-    // Pipe 1: browser
-    ffStream.pipe(res);
-
-    // Pipe 2: disk
-    const writeStream = createWriteStream(tempFile);
-    ffStream.pipe(writeStream);
-
-    writeStream.on("finish", () => {
-      try {
-        if (existsSync(tempFile)) {
-          renameSync(tempFile, cacheFile);
-          this.logger.log(`[Cache] Saved: ${cacheFile}`);
-        }
-      } catch (e) {
-        this.logger.error(`[Cache] Rename failed: ${e.message}`);
+    command.on("error", (err) => {
+      if (
+        !err.message.includes("Output stream closed") &&
+        !err.message.includes("SIGKILL")
+      ) {
+        this.logger.error(`[FFmpeg] ${sourceKey}: ${err.message}`);
       }
     });
 
+    const ffStream = command.pipe();
+
+    // Pipe duy nhất: thẳng về browser
+    ffStream.pipe(res);
+
+    // Khi client ngắt kết nối → kill FFmpeg + cleanup input
     res.on("close", () => {
-      if (!writeStream.writableFinished) {
-        command.kill("SIGKILL");
-        if (killInputFn) killInputFn();
-        writeStream.end();
-        setTimeout(() => {
-          try {
-            if (existsSync(tempFile)) unlinkSync(tempFile);
-          } catch (_) { /* file may already be gone */ }
-        }, 500);
-      }
+      command.kill("SIGKILL");
+      if (killInputFn) killInputFn();
     });
   }
 }

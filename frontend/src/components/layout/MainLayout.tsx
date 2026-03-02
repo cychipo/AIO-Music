@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+import { useGoogleOneTap } from "../../hooks/useGoogleOneTap";
+import UserAccountWidget from "../UserAccountWidget";
+import AddToPlaylistModal from "../AddToPlaylistModal";
 import Sidebar from "./Sidebar";
 import PlayerBar from "../player/PlayerBar";
 
@@ -101,9 +104,12 @@ function useIsDesktop() {
 export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
+
+  // Google One Tap — hiện popup khi chưa đăng nhập
+  useGoogleOneTap();
 
   // Sidebar expanded: defaults to true on desktop, false on mobile & tablet
   const [isExpanded, setIsExpanded] = useState(isDesktop);
@@ -224,15 +230,10 @@ export default function MainLayout() {
               <span className="hidden sm:inline">Desktop App</span>
             </button>
 
-            {user ? (
-              /* Avatar */
-              <div
-                role="img"
-                aria-label={`Signed in as ${user.displayName}`}
-                className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-sm border-2 border-primary/50 ring-4 ring-primary/10 flex-shrink-0"
-              >
-                {user.displayName?.[0]?.toUpperCase() ?? "?"}
-              </div>
+            {/* Đã đăng nhập: widget avatar + tên + logout
+                Chưa đăng nhập: nút Sign in / Sign up (GSI One Tap tự hiện popup) */}
+            {isAuthenticated ? (
+              <UserAccountWidget />
             ) : (
               <div className="flex items-center gap-1 sm:gap-2">
                 <a
@@ -260,6 +261,9 @@ export default function MainLayout() {
         {/* ── Player Bar ── */}
         <PlayerBar />
       </main>
+
+      {/* ── Global modals ── */}
+      <AddToPlaylistModal />
     </div>
   );
 }
