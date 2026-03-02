@@ -161,6 +161,15 @@ export const playlistApi = {
   getById: (playlistId: string) => apiClient.get(`/playlists/${playlistId}`),
   create: (data: { name: string; description?: string; isPublic?: boolean }) =>
     apiClient.post("/playlists", data),
+  update: (
+    playlistId: string,
+    data: {
+      name?: string;
+      description?: string;
+      isPublic?: boolean;
+      thumbnail?: string;
+    },
+  ) => apiClient.patch(`/playlists/${playlistId}`, data),
   /**
    * Thêm bài hát vào playlist.
    * trackData chứa đầy đủ metadata của bài hát để backend có thể upsert vào Track collection.
@@ -191,4 +200,25 @@ export const trendingApi = {
     apiClient.get("/trending/spotify", { params: { limit } }),
   getSoundCloud: (limit = 10) =>
     apiClient.get("/trending/soundcloud", { params: { limit } }),
+};
+
+export const uploadApi = {
+  image: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post("/uploads/image", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+  audio: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post("/uploads/audio", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
 };

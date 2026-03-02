@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Popconfirm } from "antd";
+import { Popconfirm, message } from "antd";
 import { usePlaylistStore } from "../store/playlistStore";
 import { usePlayerStore } from "../store/playerStore";
-import { playlistApi } from "../lib/apiClient";
+import { playlistApi, uploadApi } from "../lib/apiClient";
+import EditPlaylistModal from "../components/EditPlaylistModal";
 import type { Track, Playlist } from "../types";
 
 /* ── Utils ── */
@@ -68,6 +69,23 @@ function IconMusic() {
       viewBox="0 0 24 24"
     >
       <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+    </svg>
+  );
+}
+function IconEdit() {
+  return (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+      />
     </svg>
   );
 }
@@ -171,13 +189,18 @@ function TrackRow({
 export default function PlaylistDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { removeTrack } = usePlaylistStore();
+  const { removeTrack, updatePlaylist } = usePlaylistStore();
   const { play, currentTrack, status } = usePlayerStore();
 
   // Fetch playlist trực tiếp từ API để luôn có tracks đã populate
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Edit Modal State
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -249,6 +272,67 @@ export default function PlaylistDetailPage() {
     }
   }
 
+  async function handleEditSubmit(values: {
+    name: string;
+    description?: string;
+    isPublic: boolean;
+    thumbnail?: string;
+  }) {
+    try {
+      await updatePlaylist(playlist!._id, values);
+      setPlaylist((prev) => (prev ? { ...prev, ...values } : prev));
+      message.success("Cập nhật playlist thành công!");
+      setIsEditModalVisible(false);
+    } catch {
+      // modal errors are handled inside
+    }
+  }
+
+  function openEditModal() {
+    setIsEditModalVisible(true);
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      message.error("Vui lòng chọn file hình ảnh hợp lệ (JPG, PNG).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      message.error("Ảnh không được vượt quá 5MB.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      message.loading({ content: "Đang tải ảnh lên...", key: "uploadCover" });
+
+      const uploadRes = await uploadApi.image(file);
+      const url = uploadRes.data.data.url;
+
+      await updatePlaylist(playlist!._id, { thumbnail: url });
+
+      setPlaylist((prev) => (prev ? { ...prev, thumbnail: url } : prev));
+      message.success({
+        content: "Đã cập nhật ảnh bìa!",
+        key: "uploadCover",
+        duration: 2,
+      });
+    } catch (err: any) {
+      message.error({
+        content: "Tải ảnh lên thất bại.",
+        key: "uploadCover",
+        duration: 2,
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
   return (
     <div className="min-h-full">
       {/* ── Back button ── */}
@@ -263,7 +347,10 @@ export default function PlaylistDetailPage() {
       {/* ── Hero ── */}
       <div className="flex items-end gap-6 sm:gap-8 py-6 mb-8">
         {/* Cover */}
-        <div className="w-40 h-40 sm:w-52 sm:h-52 flex-shrink-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+        <div
+          className="group relative w-40 h-40 sm:w-52 sm:h-52 flex-shrink-0 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 cursor-pointer"
+          onClick={() => fileInputRef.current?.click()}
+        >
           {playlist.thumbnail ? (
             <img
               src={playlist.thumbnail}
@@ -281,6 +368,49 @@ export default function PlaylistDetailPage() {
               </svg>
             </div>
           )}
+
+          {/* Hover overlay for upload */}
+          <div
+            className={`absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ${isUploading ? "opacity-100" : ""}`}
+          >
+            {isUploading ? (
+              <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <svg
+                  className="w-8 h-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <span className="text-white font-medium text-sm">
+                  Thay ảnh bìa
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Hidden File Input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            onChange={handleImageUpload}
+          />
         </div>
 
         {/* Meta */}
@@ -288,9 +418,18 @@ export default function PlaylistDetailPage() {
           <span className="text-xs font-bold uppercase tracking-widest text-primary">
             {playlist.isPublic ? "Playlist công khai" : "Playlist riêng tư"}
           </span>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-            {playlist.name}
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight break-words">
+              {playlist.name}
+            </h1>
+            <button
+              onClick={openEditModal}
+              className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              title="Chỉnh sửa playlist"
+            >
+              <IconEdit />
+            </button>
+          </div>
           {playlist.description && (
             <p className="text-sm text-slate-400 line-clamp-2">
               {playlist.description}
@@ -348,6 +487,16 @@ export default function PlaylistDetailPage() {
             />
           ))}
         </div>
+      )}
+
+      {/* ── Edit Modal ── */}
+      {playlist && (
+        <EditPlaylistModal
+          visible={isEditModalVisible}
+          onClose={() => setIsEditModalVisible(false)}
+          playlist={playlist}
+          onSubmit={handleEditSubmit}
+        />
       )}
     </div>
   );
