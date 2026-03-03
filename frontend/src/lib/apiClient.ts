@@ -136,6 +136,8 @@ export const searchApi = {
     apiClient.get("/search/spotify", { params: { q, limit } }),
   searchSoundCloud: (q: string, limit = 10) =>
     apiClient.get("/search/soundcloud", { params: { q, limit } }),
+  searchTiktok: (q: string, limit = 10) =>
+    apiClient.get("/search/tiktok", { params: { q, limit } }),
 };
 
 export const streamApi = {
@@ -192,7 +194,7 @@ export const userApi = {
 };
 
 export const trendingApi = {
-  /** Lấy trending song song từ cả 3 nền tảng */
+  /** Lấy trending song song từ cả 4 nền tảng */
   getAll: (limit = 10) => apiClient.get("/trending", { params: { limit } }),
   getYoutube: (limit = 10) =>
     apiClient.get("/trending/youtube", { params: { limit } }),
@@ -200,6 +202,8 @@ export const trendingApi = {
     apiClient.get("/trending/spotify", { params: { limit } }),
   getSoundCloud: (limit = 10) =>
     apiClient.get("/trending/soundcloud", { params: { limit } }),
+  getTiktok: (limit = 10, offset = 0) =>
+    apiClient.get("/trending/tiktok", { params: { limit, offset } }),
 };
 
 export const uploadApi = {

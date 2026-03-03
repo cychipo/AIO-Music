@@ -29,7 +29,7 @@ export interface SearchResult {
   artist: string;
   thumbnail: string;
   duration: number;
-  source: "youtube" | "spotify" | "soundcloud";
+  source: "youtube" | "spotify" | "soundcloud" | "tiktok";
   youtubeId?: string;
   url?: string;
 }
@@ -54,7 +54,7 @@ export interface TrendingTrack {
   artist: string;
   thumbnail: string;
   duration: number;
-  source: "youtube" | "spotify" | "soundcloud";
+  source: "youtube" | "spotify" | "soundcloud" | "tiktok";
   youtubeId?: string;
   previewUrl?: string;
   url: string;
@@ -66,6 +66,7 @@ export interface TrendingData {
   youtube: TrendingTrack[];
   spotify: TrendingTrack[];
   soundcloud: TrendingTrack[];
+  tiktok: TrendingTrack[];
   fetchedAt: string;
 }
 

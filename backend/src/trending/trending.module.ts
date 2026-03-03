@@ -4,6 +4,7 @@ import { TrendingService } from "./trending.service";
 import { YoutubeTrendingService } from "./providers/youtube-trending.service";
 import { SpotifyTrendingService } from "./providers/spotify-trending.service";
 import { SoundcloudTrendingService } from "./providers/soundcloud-trending.service";
+import { TiktokTrendingService } from "./providers/tiktok-trending.service";
 
 @Module({
   controllers: [TrendingController],
@@ -12,6 +13,7 @@ import { SoundcloudTrendingService } from "./providers/soundcloud-trending.servi
     YoutubeTrendingService,
     SpotifyTrendingService,
     SoundcloudTrendingService,
+    TiktokTrendingService,
   ],
   exports: [TrendingService],
 })

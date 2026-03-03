@@ -4,6 +4,7 @@ import { catchError } from "rxjs/operators";
 import { YoutubeTrendingService } from "./providers/youtube-trending.service";
 import { SpotifyTrendingService } from "./providers/spotify-trending.service";
 import { SoundcloudTrendingService } from "./providers/soundcloud-trending.service";
+import { TiktokTrendingService } from "./providers/tiktok-trending.service";
 
 export interface TrendingTrack {
   rank: number;
@@ -12,7 +13,7 @@ export interface TrendingTrack {
   artist: string;
   thumbnail: string;
   duration: number; // seconds
-  source: "youtube" | "spotify" | "soundcloud";
+  source: "youtube" | "spotify" | "soundcloud" | "tiktok";
   youtubeId?: string; // chỉ có với YouTube tracks
   previewUrl?: string; // chỉ có với Spotify tracks (30s preview)
   url: string; // link gốc đến platform
@@ -24,6 +25,7 @@ export interface TrendingResponse {
   youtube: TrendingTrack[];
   spotify: TrendingTrack[];
   soundcloud: TrendingTrack[];
+  tiktok: TrendingTrack[];
   fetchedAt: string; // ISO timestamp để client biết khi nào data được lấy
 }
 
@@ -35,10 +37,11 @@ export class TrendingService {
     private readonly youtubeTrending: YoutubeTrendingService,
     private readonly spotifyTrending: SpotifyTrendingService,
     private readonly soundcloudTrending: SoundcloudTrendingService,
+    private readonly tiktokTrending: TiktokTrendingService,
   ) {}
 
   /**
-   * Lấy trending song song từ cả 3 nền tảng.
+   * Lấy trending song song từ cả 4 nền tảng.
    * Lỗi từng nguồn riêng lẻ được catch — không crash toàn bộ response.
    */
   async getAll(limit = 10): Promise<TrendingResponse> {
@@ -63,12 +66,19 @@ export class TrendingService {
           return of([] as TrendingTrack[]);
         }),
       ),
+      tiktok: from(this.tiktokTrending.getTrending(limit)).pipe(
+        catchError((err) => {
+          this.logger.warn(`TikTok trending failed: ${err.message}`);
+          return of([] as TrendingTrack[]);
+        }),
+      ),
     }).toPromise();
 
     return {
       youtube: results.youtube || [],
       spotify: results.spotify || [],
       soundcloud: results.soundcloud || [],
+      tiktok: results.tiktok || [],
       fetchedAt: new Date().toISOString(),
     };
   }
@@ -83,5 +93,9 @@ export class TrendingService {
 
   async getSoundCloud(limit = 10): Promise<TrendingTrack[]> {
     return this.soundcloudTrending.getTrending(limit);
+  }
+
+  async getTiktok(limit = 10, offset = 0): Promise<TrendingTrack[]> {
+    return this.tiktokTrending.getTrending(limit, offset);
   }
 }

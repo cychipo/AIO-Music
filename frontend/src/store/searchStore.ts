@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { SearchResult } from "../types";
 import { searchApi } from "../lib/apiClient";
 
-type Platform = "youtube" | "spotify" | "soundcloud";
+type Platform = "youtube" | "spotify" | "soundcloud" | "tiktok";
 
 interface SearchStore {
   query: string;
@@ -25,7 +25,7 @@ const DEFAULT_LIMIT = 12;
 
 export const useSearchStore = create<SearchStore>((set, get) => ({
   query: "",
-  results: { youtube: [], spotify: [], soundcloud: [] },
+  results: { youtube: [], spotify: [], soundcloud: [], tiktok: [] },
   isLoading: false,
   isLoadingMore: false,
   error: null,
@@ -34,19 +34,21 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
     youtube: DEFAULT_LIMIT,
     spotify: DEFAULT_LIMIT,
     soundcloud: DEFAULT_LIMIT,
+    tiktok: DEFAULT_LIMIT,
   },
-  hasMore: { youtube: true, spotify: true, soundcloud: true },
+  hasMore: { youtube: true, spotify: true, soundcloud: true, tiktok: true },
 
   setQuery: (q) =>
     set({
       query: q,
-      results: { youtube: [], spotify: [], soundcloud: [] },
+      results: { youtube: [], spotify: [], soundcloud: [], tiktok: [] },
       searchLimit: {
         youtube: DEFAULT_LIMIT,
         spotify: DEFAULT_LIMIT,
         soundcloud: DEFAULT_LIMIT,
+        tiktok: DEFAULT_LIMIT,
       },
-      hasMore: { youtube: true, spotify: true, soundcloud: true },
+      hasMore: { youtube: true, spotify: true, soundcloud: true, tiktok: true },
     }),
   setSource: (source) => set({ activeSource: source }),
 
@@ -84,6 +86,8 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
         res = await searchApi.searchSpotify(query, limit);
       } else if (source === "soundcloud") {
         res = await searchApi.searchSoundCloud(query, limit);
+      } else if (source === "tiktok") {
+        res = await searchApi.searchTiktok(query, limit);
       } else {
         res = await searchApi.searchAll(query, limit);
       }
@@ -116,13 +120,14 @@ export const useSearchStore = create<SearchStore>((set, get) => ({
 
   clearResults: () =>
     set({
-      results: { youtube: [], spotify: [], soundcloud: [] },
+      results: { youtube: [], spotify: [], soundcloud: [], tiktok: [] },
       query: "",
       searchLimit: {
         youtube: DEFAULT_LIMIT,
         spotify: DEFAULT_LIMIT,
         soundcloud: DEFAULT_LIMIT,
+        tiktok: DEFAULT_LIMIT,
       },
-      hasMore: { youtube: true, spotify: true, soundcloud: true },
+      hasMore: { youtube: true, spotify: true, soundcloud: true, tiktok: true },
     }),
 }));

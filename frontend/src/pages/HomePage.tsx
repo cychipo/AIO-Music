@@ -22,7 +22,7 @@ const PLATFORM_BADGE: Record<
     cls: "bg-red-600/25 text-red-400 border border-red-500/30",
     icon: (
       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z" />
+        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.3 0 8a3 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z" />
       </svg>
     ),
   },
@@ -41,6 +41,15 @@ const PLATFORM_BADGE: Record<
     icon: (
       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
         <path d="M0 15.5a.5.5 0 0 0 1 0v-5a.5.5 0 0 0-1 0v5zm1.5 1a.5.5 0 0 0 1 0v-7a.5.5 0 0 0-1 0v7zm1.5.5a.5.5 0 0 0 1 0V12a.5.5 0 0 0-1 0v5zm1.5.5a.5.5 0 0 0 1 0v-6a.5.5 0 0 0-1 0v6zm5.5-10C9.5 5 8 6.5 8 8.2c0 .1 0 .2.01.3A3 3 0 0 0 6 11.5a3 3 0 0 0 3 3h7a2.5 2.5 0 0 0 2.5-2.5c0-1.2-.8-2.2-2-2.5V9a4.5 4.5 0 0 0-7.5-1z" />
+      </svg>
+    ),
+  },
+  tiktok: {
+    label: "TikTok",
+    cls: "bg-cyan-500/25 text-cyan-400 border border-cyan-500/30",
+    icon: (
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
       </svg>
     ),
   },
@@ -291,12 +300,13 @@ export default function HomePage() {
 
   // Tabs state
   const [activeTab, setActiveTab] = useState<
-    "youtube" | "spotify" | "soundcloud"
+    "youtube" | "spotify" | "soundcloud" | "tiktok"
   >("youtube");
   const [tabLimits, setTabLimits] = useState({
     youtube: 12,
     spotify: 12,
     soundcloud: 12,
+    tiktok: 12,
   });
 
   const {
@@ -413,7 +423,7 @@ export default function HomePage() {
 
           {/* Tabs */}
           <div className="flex items-center gap-2 sm:gap-3 bg-white/5 p-1 rounded-full border border-white/10 overflow-x-auto hide-scrollbar">
-            {(["youtube", "spotify", "soundcloud"] as const).map((platform) => (
+            {(["youtube", "spotify", "soundcloud", "tiktok"] as const).map((platform) => (
               <button
                 key={platform}
                 onClick={() => setActiveTab(platform)}

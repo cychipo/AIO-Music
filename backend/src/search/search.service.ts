@@ -4,6 +4,7 @@ import { catchError, map } from "rxjs/operators";
 import { YoutubeSearchService } from "./providers/youtube-search.service";
 import { SpotifySearchService } from "./providers/spotify-search.service";
 import { SoundcloudSearchService } from "./providers/soundcloud-search.service";
+import { TiktokSearchService } from "./providers/tiktok-search.service";
 
 export interface SearchResult {
   id: string;
@@ -11,7 +12,7 @@ export interface SearchResult {
   artist: string;
   thumbnail: string;
   duration: number;
-  source: "youtube" | "spotify" | "soundcloud";
+  source: "youtube" | "spotify" | "soundcloud" | "tiktok";
   youtubeId?: string; // Resolved for Spotify tracks
   url?: string; // Permalink (SoundCloud, etc.)
 }
@@ -24,6 +25,7 @@ export class SearchService {
     private youtubeSearch: YoutubeSearchService,
     private spotifySearch: SpotifySearchService,
     private soundcloudSearch: SoundcloudSearchService,
+    private tiktokSearch: TiktokSearchService,
   ) {}
 
   /**
@@ -50,6 +52,12 @@ export class SearchService {
           return of([]);
         }),
       ),
+      tiktok: from(this.tiktokSearch.search(query, limit)).pipe(
+        catchError((err) => {
+          this.logger.warn(`TikTok search failed: ${err.message}`);
+          return of([]);
+        }),
+      ),
     }).toPromise();
 
     // Merge and deduplicate by title+artist
@@ -57,6 +65,7 @@ export class SearchService {
       ...(results.youtube || []),
       ...(results.spotify || []),
       ...(results.soundcloud || []),
+      ...(results.tiktok || []),
     ];
 
     return all;
@@ -72,6 +81,10 @@ export class SearchService {
 
   async searchSoundcloud(query: string, limit = 10): Promise<SearchResult[]> {
     return this.soundcloudSearch.search(query, limit);
+  }
+
+  async searchTiktok(query: string, limit = 10): Promise<SearchResult[]> {
+    return this.tiktokSearch.search(query, limit);
   }
 
   /**
