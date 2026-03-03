@@ -17,7 +17,7 @@ export class SearchController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({
-    summary: "Tìm kiếm đồng thời trên YouTube + Spotify + SoundCloud",
+    summary: "Tìm kiếm đồng thời trên YouTube + Spotify + SoundCloud + TikTok",
   })
   @ApiQuery({ name: "q", required: true, example: "shape of you" })
   @ApiQuery({ name: "limit", required: false, example: 10 })
@@ -50,5 +50,14 @@ export class SearchController {
   @ApiQuery({ name: "limit", required: false, example: 10 })
   searchSoundcloud(@Query("q") query: string, @Query("limit") limit?: string) {
     return this.searchService.searchSoundcloud(query, limit ? +limit : 10);
+  }
+
+  @Get("tiktok")
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: "Tìm kiếm chỉ trên TikTok" })
+  @ApiQuery({ name: "q", required: true, example: "shape of you" })
+  @ApiQuery({ name: "limit", required: false, example: 10 })
+  searchTiktok(@Query("q") query: string, @Query("limit") limit?: string) {
+    return this.searchService.searchTiktok(query, limit ? +limit : 10);
   }
 }

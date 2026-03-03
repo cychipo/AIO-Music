@@ -10,7 +10,7 @@ import * as play from "play-dl";
 import * as ffmpeg from "fluent-ffmpeg";
 import * as ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 
-export type StreamPlatform = "youtube" | "spotify" | "soundcloud";
+export type StreamPlatform = "youtube" | "spotify" | "soundcloud" | "tiktok";
 
 @Injectable()
 export class StreamService {
@@ -25,8 +25,11 @@ export class StreamService {
     if (/youtube\.com|youtu\.be/.test(url)) return "youtube";
     if (/spotify\.com/.test(url)) return "spotify";
     if (/soundcloud\.com|api\.soundcloud\.com/.test(url)) return "soundcloud";
+    if (/tiktok\.com/.test(url)) return "tiktok";
+    // YouTube search results URL (used for TikTok fallback)
+    if (/youtube\.com\/results/.test(url)) return "youtube";
     throw new BadRequestException(
-      `URL không được hỗ trợ: ${url}. Chỉ hỗ trợ Spotify, SoundCloud.`,
+      `URL không được hỗ trợ: ${url}. Chỉ hỗ trợ Spotify, SoundCloud, TikTok, YouTube.`,
     );
   }
 
@@ -109,6 +112,114 @@ export class StreamService {
       if (!res.headersSent) {
         throw new InternalServerErrorException(
           "Không thể stream từ SoundCloud: " + err.message,
+        );
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // TIKTOK — tìm trên YouTube rồi stream (vì TikTok không có direct audio stream)
+  // ---------------------------------------------------------------------------
+
+  async streamTiktok(tiktokUrl: string, res: Response): Promise<void> {
+    this.logger.log(`[TikTok] Xử lý URL: ${tiktokUrl}`);
+
+    try {
+      // Extract video ID from TikTok URL
+      const videoIdMatch = tiktokUrl.match(/video\/(\d+)/);
+      const musicIdMatch = tiktokUrl.match(/music\/([^\/]+)-(\d+)/);
+      
+      let searchQuery = "";
+      
+      if (musicIdMatch) {
+        // If it's a music URL, use the music title
+        searchQuery = musicIdMatch[1].replace(/-/g, " ");
+      } else if (videoIdMatch) {
+        // For video URLs, we need to fetch metadata to get the audio title
+        // For now, search with a generic query - in production you'd want to fetch video info
+        searchQuery = "viral tiktok song";
+      }
+
+      if (!searchQuery) {
+        searchQuery = "viral tiktok music";
+      }
+
+      this.logger.log(`[TikTok] Tìm kiếm YouTube: "${searchQuery}"`);
+
+      const results = await play.search(searchQuery, {
+        source: { youtube: "video" },
+        limit: 1,
+      });
+
+      if (!results?.length) {
+        throw new InternalServerErrorException(
+          `Không tìm thấy "${searchQuery}" trên YouTube.`,
+        );
+      }
+
+      const ytUrl = (results[0] as any).url;
+      if (!ytUrl) {
+        throw new InternalServerErrorException(
+          "Không lấy được YouTube URL từ kết quả tìm kiếm.",
+        );
+      }
+
+      await this.streamYouTube(ytUrl, res);
+    } catch (err) {
+      this.logger.error(`[TikTok] Lỗi: ${err.message}`);
+      if (!res.headersSent) {
+        throw err instanceof BadRequestException ||
+          err instanceof InternalServerErrorException
+          ? err
+          : new InternalServerErrorException(
+              "Không thể stream từ TikTok: " + err.message,
+            );
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // YOUTUBE — play-dl → FFmpeg → client (dùng cho TikTok fallback)
+  // ---------------------------------------------------------------------------
+
+  async streamYouTube(youtubeUrl: string, res: Response): Promise<void> {
+    this.logger.log(`[YouTube] Stream: ${youtubeUrl}`);
+
+    try {
+      let streamUrl = youtubeUrl;
+
+      // If it's a YouTube search results URL, extract the first video
+      if (youtubeUrl.includes("youtube.com/results")) {
+        this.logger.log(`[YouTube] Detected search URL, extracting first result`);
+        
+        const searchResults = await play.search(youtubeUrl.split("search_query=")[1] || "", {
+          source: { youtube: "video" },
+          limit: 1,
+        });
+
+        if (!searchResults || searchResults.length === 0) {
+          throw new InternalServerErrorException("Không tìm thấy kết quả trên YouTube.");
+        }
+
+        streamUrl = (searchResults[0] as any).url;
+        this.logger.log(`[YouTube] Using video: ${streamUrl}`);
+      }
+
+      const source = await play.stream(streamUrl);
+      this._streamToClient(
+        source.stream as NodeJS.ReadableStream,
+        "yt",
+        res,
+        source.type,
+        () => {
+          (source.stream as any).destroy?.();
+        },
+      );
+    } catch (err) {
+      this.logger.error(`[YouTube] Lỗi: ${err.message}`);
+      if (!res.headersSent) {
+        throw new InternalServerErrorException(
+          "Không thể stream từ YouTube: " + err.message,
         );
       }
     }

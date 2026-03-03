@@ -15,13 +15,13 @@ export class TrendingController {
 
   /**
    * GET /trending
-   * Trả về top trending từ cả 3 nền tảng song song.
+   * Trả về top trending từ cả 4 nền tảng song song.
    */
   @Get()
   @ApiOperation({
-    summary: "Lấy top trending từ YouTube, Spotify và SoundCloud cùng lúc",
+    summary: "Lấy top trending từ YouTube, Spotify, SoundCloud và TikTok cùng lúc",
     description:
-      "Gọi 3 platform song song (forkJoin). Nếu một platform lỗi, " +
+      "Gọi 4 platform song song (forkJoin). Nếu một platform lỗi, " +
       "các platform còn lại vẫn trả về bình thường.",
   })
   @ApiQuery({
@@ -32,7 +32,7 @@ export class TrendingController {
   })
   @ApiResponse({
     status: 200,
-    description: "{ youtube[], spotify[], soundcloud[], fetchedAt }",
+    description: "{ youtube[], spotify[], soundcloud[], tiktok[], fetchedAt }",
   })
   getAll(@Query("limit") limit?: string) {
     const n = Math.min(parseInt(limit || "10", 10), 50);
@@ -78,5 +78,18 @@ export class TrendingController {
   getSoundCloud(@Query("limit") limit?: string) {
     const n = Math.min(parseInt(limit || "10", 10), 50);
     return this.trendingService.getSoundCloud(n);
+  }
+
+  /**
+   * GET /trending/tiktok
+   */
+  @Get("tiktok")
+  @ApiOperation({ summary: "Top trending Music trên TikTok" })
+  @ApiQuery({ name: "limit", required: false, example: 10 })
+  @ApiQuery({ name: "offset", required: false, example: 0 })
+  getTiktok(@Query("limit") limit?: string, @Query("offset") offset?: string) {
+    const n = Math.min(parseInt(limit || "10", 10), 50);
+    const o = parseInt(offset || "0", 10);
+    return this.trendingService.getTiktok(n, o);
   }
 }

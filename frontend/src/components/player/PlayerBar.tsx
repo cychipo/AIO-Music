@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePlayerStore } from "../../store/playerStore";
 
 function formatTime(s: number) {
@@ -7,6 +7,110 @@ function formatTime(s: number) {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
   return `${m}:${sec.toString().padStart(2, "0")}`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// TikTokEngine — iframe embed for TikTok videos
+// ─────────────────────────────────────────────────────────────
+
+function TikTokEngine() {
+  const { currentTrack, status, next, repeatMode, volume, isMuted } = usePlayerStore();
+  const [tiktokId, setTiktokId] = useState<string | null>(null);
+  const [showEmbed, setShowEmbed] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (!currentTrack || currentTrack.source !== "tiktok") {
+      setShowEmbed(false);
+      return;
+    }
+
+    // Extract TikTok video ID
+    const url = (currentTrack as any).url;
+    if (!url) {
+      // Try to get from id field
+      const id = (currentTrack as any).id;
+      if (id) {
+        setTiktokId(id);
+        setShowEmbed(true);
+      }
+      return;
+    }
+
+    // Extract video ID from TikTok URL
+    const videoMatch = url.match(/video\/(\d+)/);
+    if (videoMatch) {
+      setTiktokId(videoMatch[1]);
+      setShowEmbed(true);
+    } else {
+      // Try music URL
+      const musicMatch = url.match(/music\/[^\/]+-(\d+)/);
+      if (musicMatch) {
+        setTiktokId(musicMatch[1]);
+        setShowEmbed(true);
+      }
+    }
+  }, [currentTrack]);
+
+  // Listen for messages from TikTok iframe
+  useEffect(() => {
+    if (!showEmbed) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        if (data.event === 'video_end') {
+          if (repeatMode === "one") {
+            // Reload iframe to replay
+            setShowEmbed(false);
+            setTimeout(() => setShowEmbed(true), 100);
+          } else {
+            next();
+          }
+        }
+      } catch (e) {
+        // Not a TikTok message
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [showEmbed, repeatMode, next]);
+
+  if (!showEmbed || !tiktokId) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+      onClick={() => setShowEmbed(false)}
+    >
+      <div 
+        className="relative w-full max-w-[500px] aspect-[9/16] rounded-2xl overflow-hidden bg-black"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <iframe
+          ref={iframeRef}
+          src={`https://www.tiktok.com/embed/v2/${tiktokId}?autoplay=1&muted=1`}
+          className="absolute inset-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="TikTok Video"
+        />
+        <button
+          onClick={() => setShowEmbed(false)}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </motion.div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -34,6 +138,22 @@ function YouTubeEngine() {
   useEffect(() => {
     let destroyed = false;
 
+    /**
+     * Ép player về chất lượng thấp nhất và tốc độ bình thường.
+     * "small" = 240p (mức thấp nhất YouTube IFrame API hỗ trợ).
+     * Vì chỉ cần audio, không cần decode video chất lượng cao.
+     */
+    function enforceLowestQuality(player: YT.Player) {
+      try {
+        player.setPlaybackQuality("small");
+        if (player.getPlaybackRate() !== 1) {
+          player.setPlaybackRate(1);
+        }
+      } catch (_) {
+        /* player chưa sẵn sàng */
+      }
+    }
+
     function createPlayer() {
       if (destroyed) return;
       if (playerRef.current) return; // already created
@@ -56,12 +176,10 @@ function YouTubeEngine() {
         events: {
           onReady: () => {
             if (destroyed) return;
-            // Set YouTube volume về 100% — loudness được cân bằng
-            // ở phía SoundCloud/Spotify bằng GainNode trong playerStore
-            playerRef.current!.setVolume(
-              isMuted ? 0 : Math.round(volume * 100),
-            );
-            initYouTubePlayer(playerRef.current!);
+            const p = playerRef.current!;
+            p.setVolume(isMuted ? 0 : Math.round(volume * 100));
+            enforceLowestQuality(p);
+            initYouTubePlayer(p);
           },
           onStateChange: (e) => {
             if (destroyed) return;
@@ -70,11 +188,36 @@ function YouTubeEngine() {
               case YTState.PLAYING:
                 setStatus("playing");
                 _startYTPoll();
+                // Ép lại quality mỗi khi chuyển sang PLAYING
+                // (YouTube có thể tự nâng quality sau khi buffer)
+                enforceLowestQuality(e.target);
                 break;
-              case YTState.PAUSED:
-                setStatus("paused");
-                _stopYTPoll();
+
+              case YTState.PAUSED: {
+                // Phân biệt user pause vs YouTube "Are you still watching?"
+                // Khi user bấm pause → store.status đã set thành "paused"
+                // Khi YouTube auto-pause → store.status vẫn là "playing"
+                const storeStatus = usePlayerStore.getState().status;
+                if (storeStatus === "playing") {
+                  // YouTube idle detection → auto-resume sau delay ngắn
+                  console.log(
+                    "[YT] Detected YouTube idle pause — auto-resuming",
+                  );
+                  setTimeout(() => {
+                    if (destroyed) return;
+                    try {
+                      e.target.playVideo();
+                    } catch (_) {
+                      /* player destroyed */
+                    }
+                  }, 500);
+                } else {
+                  setStatus("paused");
+                  _stopYTPoll();
+                }
                 break;
+              }
+
               case YTState.BUFFERING:
                 setStatus("loading");
                 break;
@@ -178,6 +321,9 @@ export default function PlayerBar() {
     <>
       {/* Always-mounted YouTube engine (invisible) */}
       <YouTubeEngine />
+
+      {/* TikTok embed modal */}
+      <TikTokEngine />
 
       <AnimatePresence>
         {currentTrack && (

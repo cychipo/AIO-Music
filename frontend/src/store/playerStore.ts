@@ -13,6 +13,13 @@ const SC_GAIN_NORMALIZATION = 0.65;
 
 function getYouTubeId(track: AnyTrack): string | null {
   const t = track as any;
+  
+  // If track is from TikTok but has YouTube URL (from yt-dlp search)
+  if (track.source === "tiktok" && t.url && t.url.includes("youtube.com")) {
+    const m = t.url.match(/[?&]v=([^&]+)/) || t.url.match(/youtu\.be\/([^?]+)/);
+    if (m) return m[1];
+  }
+  
   if (t.youtubeId) return t.youtubeId as string;
   if (track.source === "youtube") {
     if ("id" in track) return (track as SearchResult).id;
@@ -26,16 +33,53 @@ function getYouTubeId(track: AnyTrack): string | null {
   return null;
 }
 
+function getTiktokId(track: AnyTrack): string | null {
+  const t = track as any;
+  const url = t.url as string | undefined;
+  if (!url) {
+    // Try to get from id field if it's a TikTok track
+    if (track.source === "tiktok") {
+      return (track as any).id || null;
+    }
+    return null;
+  }
+  
+  // Extract video ID from various TikTok URL formats
+  // https://www.tiktok.com/@user/video/1234567890123456789
+  const videoMatch = url.match(/video\/(\d+)/);
+  if (videoMatch) return videoMatch[1];
+  
+  // https://www.tiktok.com/music/song-name-1234567890
+  const musicMatch = url.match(/music\/[^\/]+-(\d+)/);
+  if (musicMatch) return musicMatch[1];
+  
+  return null;
+}
+
 function buildAudioStreamUrl(track: AnyTrack): string {
   const BASE = "/api/v1/stream";
   const t = track as any;
   const originalUrl = t.url as string | undefined;
-  if (originalUrl) return `${BASE}?url=${encodeURIComponent(originalUrl)}`;
+  
+  // TikTok is handled via embed player, not audio streaming
+  if (track.source === "tiktok") {
+    return "";
+  }
+  
+  // For Spotify, SoundCloud - use the stream endpoint with original URL
+  if (originalUrl) {
+    if (originalUrl.includes("spotify.com") || 
+        originalUrl.includes("soundcloud.com")) {
+      return `${BASE}?url=${encodeURIComponent(originalUrl)}`;
+    }
+  }
+  
   if (track.source === "soundcloud") {
     const id =
       "id" in track ? (track as SearchResult).id : (track as Track)._id;
     return `${BASE}?url=${encodeURIComponent(`https://api.soundcloud.com/tracks/${id}`)}`;
   }
+  
   return "";
 }
 
@@ -212,7 +256,22 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
       }
       // IFrame API max = 100, không boost thêm được
       ytPlayer.setVolume(isMuted ? 0 : 100);
-      ytPlayer.loadVideoById(ytId);
+      ytPlayer.loadVideoById({
+        videoId: ytId,
+        suggestedQuality: "small",
+      });
+      // Ép quality thấp nhất và tốc độ bình thường cho audio-only playback
+      try {
+        ytPlayer.setPlaybackQuality("small");
+        ytPlayer.setPlaybackRate(1);
+      } catch (_) {
+        /* player chưa sẵn sàng */
+      }
+    } else if (track.source === "tiktok") {
+      // ── TikTok: Show embed modal ───────────────────────────
+      // TikTok is handled by TikTokEngine component via embed iframe
+      // Just set status to playing to show the player bar
+      set({ status: "playing" });
     } else {
       // ── SoundCloud / Spotify: HTML5 Audio + GainNode ───────
       const streamUrl = buildAudioStreamUrl(track);
